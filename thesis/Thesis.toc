@@ -1,0 +1,38 @@
+\contentsline {section}{\numberline {1}Research overview}{3}
+\contentsline {section}{\numberline {2}The Hubbard model}{4}
+\contentsline {section}{\numberline {3}Theoretical background: Neural networks}{7}
+\contentsline {subsection}{\numberline {3.1}Mathematical description of neural networks}{7}
+\contentsline {subsubsection}{\numberline {3.1.1}Hidden units}{8}
+\contentsline {subsubsection}{\numberline {3.1.2}Activation function}{8}
+\contentsline {subsection}{\numberline {3.2}Training of the neural network}{9}
+\contentsline {subsubsection}{\numberline {3.2.1}Initialization phase}{10}
+\contentsline {subsubsection}{\numberline {3.2.2}Training phase}{11}
+\contentsline {section}{\numberline {4}Two site Hubbard model}{14}
+\contentsline {subsection}{\numberline {4.1}Training data}{15}
+\contentsline {subsection}{\numberline {4.2}Test data}{15}
+\contentsline {subsection}{\numberline {4.3}Neural networks}{15}
+\contentsline {subsubsection}{\numberline {4.3.1}General assessment of the hyper parameter sweep}{17}
+\contentsline {paragraph}{Network performace for the hyper parameter sweep at random seed 1}{17}
+\contentsline {paragraph}{Network performance for the hyper parameter sweep at random seed 2}{18}
+\contentsline {paragraph}{Overall conclusion of the hyper parameter sweep}{18}
+\contentsline {subsubsection}{\numberline {4.3.2}Reliability and reproducability of the networks}{}
+\contentsline {paragraph}{Discussion of the nine layer and three nodes per layer network}{}
+\contentsline {paragraph}{Discussion of the nine layer and nine nodes per layer network}{}
+\contentsline {paragraph}{Conclusion}{}
+\contentsline {section}{\numberline {5}Four site Hubbard model}{}
+\contentsline {subsection}{\numberline {5.1}Training data}{}
+\contentsline {subsubsection}{\numberline {5.1.1}Randomized dataset}{}
+\contentsline {subsubsection}{\numberline {5.1.2}Data augmentation}{}
+\contentsline {subsection}{\numberline {5.2}Test dataset}{}
+\contentsline {subsubsection}{\numberline {5.2.1}Test set based upon relevant chemical structures}{}
+\contentsline {subsubsection}{\numberline {5.2.2}Test data based upon quantumchemical effects}{}
+\contentsline {subsubsection}{\numberline {5.2.3}Test data based on structures with less complexity}{}
+\contentsline {subsection}{\numberline {5.3}Neural networks}{}
+\contentsline {subsubsection}{\numberline {5.3.1}Architectures: General overview and general performance assesment}{}
+\contentsline {subsubsection}{\numberline {5.3.2}Network assesment through the visualization of the potential energy surface}{}
+\contentsline {paragraph}{Discussion of the homonuclear PES}{}
+\contentsline {paragraph}{Discussion of the Jahn-Teller PES}{}
+\contentsline {paragraph}{General conclusion}{}
+\contentsline {paragraph}{Comparisson with networks utilizing augmented data}{}
+\contentsline {paragraph}{Performance on structures of lesser complexity}{}
+\contentsline {section}{\numberline {6}Conclusions}{}
