@@ -1,0 +1,151 @@
+\documentclass[]{article}
+\usepackage{default}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage[a4paper, margin=3.5cm]{geometry}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{float}
+\usepackage[utf8]{inputenc}
+\usepackage{cite}
+
+\bibliography{library.bib}
+\bibliographystyle{plain}
+\begin{document}
+
+\section{Theoretical Background: The Hubbard Hamiltonian}
+
+The main operator in quantum mechanics and quantum chemistry is the Hamiltonian operator $\hat{H}$ which represents the the energy operator of a system and is defined as follows
+
+\begin{equation}
+	\begin{split}
+		\hat{H} & = \hat{T} + \hat{V} \\
+		& = -\frac{1}{2}\sum_{i}^{N} \hat{\nabla_i} -\sum_{A}^{M}\sum_{i}^{N} \frac{Z_A}{\lvert r_i - R_A \rvert} + \sum_{i>j}^{N} \frac{1}{r_{ij}}
+	\end{split} 
+\end{equation}
+\\
+\\
+Which is comprised of a kinetic energy component $\hat{T}$ and a potential energy component $\hat{V}$. We make a destinction between the one electron terms and a two electron term
+\begin{itemize}
+	\item  $\hat{\nabla_i}$, describing the momentum of the electron i
+	\item $\frac{1}{\lvert r_i - R_A \rvert}$, describing the nuclear attraction from electron i to nucleus A
+	\item $\frac{1}{r_{ij}}$, describing the inter electronic repulsion between two electrons i and j
+\end{itemize}
+The general premise of quantum mechanics is to solve the Schrödinger equation
+\begin{equation}
+	\hat{H}\Psi = E\Psi
+\end{equation}
+Where $\Psi$ represents the wavefunction of the system and E the energy corresponding to the wavefunction of that system. However when dealing with many body systems this solution is not easily calculable and as a consequence many methods are developed that approximate this exact solutions.
+\\
+\\
+In solid state physics, a common formalism to describe these many body problems is the second quantization method. This formalism is used for a variety of reasons
+\begin{itemize}
+	\item In comparison to the first quantization which describes the wavefucntion as a Slater determinant the second quantization starts from two specific operators, the creation and annihilation operator, that follow a specific algebra which includes requirement of antisymmetry requirement of the wavefunction automatically
+	\item The Hamiltonian in second quantization is independent of the amount of electrons. This allows for the use of a Hamiltonian that is easily applicable to systems with a varying amount of electrons
+	\item Second quantization is standardly defined through one electron functions but the transition to to function that contain more than one electron is possible 	
+\end{itemize}
+\\
+\subsection{Second quantization algebra}
+The representation of the wave function in second quantization is done through the use of the creation and annihilation operators. In this formalism every wave function starts out as a vacuum state $\lvert vac \rangle$. This vacuum state adheres to the standard braket convetion, that is\cite{Surjan}
+\begin{itemize}
+	\item Normalized $\langle vac\rvert vac \rangle =1$
+	\item Orthogonal to any other state that is not the vacuum state.
+\end{itemize}
+\\
+Description of the wavefunction is consequently achieved through a product of creation operators working in on this vacuum state.
+\\
+\\
+This annhilation operator $\hat{a}$ and creation operator $\hat{a}^\dagger$ adhere to the following algebraic relationships (when describing fermionic particles)
+\begin{itemize}
+	\item In order for the wave function to be anti symmetric it is required for the operators to have the following anti commutation relation
+	\begin{equation}
+		\{\hat{a}^\dagger_i, \hat{a}^\dagger_j\} = \hat{a}^\dagger_i\hat{a}^\dagger_j + \hat{a}^\dagger_j\hat{a}^\dagger_i = 0
+	\end{equation}
+	\item Only one particle is allowed to occupy a specific state at a time
+	\begin{equation}
+		\hat{a}^\dagger_i\hat{a}^\dagger_k = 0 \iff i=j
+	\end{equation}
+	\item The annihilation and creation operator adhere to the following anti commutation
+	\begin{equation}
+		\{ \hat{a}_{i}, \hat{a}^{\dagger}_{k} \} = \delta_{ij}
+	\end{equation} 
+\end{itemize}
+With respect to this research we will discuss two different methods often used in chemistry and solid state physics, i.e. the Hückel model and the Hubbard model.
+
+\subsection{The Hückel method}
+
+The Hückel method is a method that is used to obtain information about the $\pi$ system of a molecular system in a simplistic way. Starting from $\{p_z\}$ basis of a molecular we construct a model based solely upon one electron integrals. The Hückel Hamiltonian where bonding is possible between the $p_z$ spin orbitals is 
+\newline
+\begin{equation}
+	\hat{H} = \sum_{\mu, \nu} h_{mn}\hat{a}^{\dagger}_{\mu}\hat{a}_{\nu} = \sum_{m,n} \sum_{\sigma} }h_{mn}\hat{a}^{\dagger}_{m\sigma}\hat{a}_{n\sigma}
+\end{equation}
+\newline
+Where we have decomposed the spin orbitals $\{\mu, \nu\}$ into their corresponding spatial orbitals $\{m,n\}$ and their spin $\{\sigma\}$.
+\\
+\\
+A simplification that makes the Hückel Hamiltonian so easily solveable is that the one electron terms $h_{\mu \nu}$ are not calculated thorugh integration of the spin orbitals but through assignment of empirical parameters. The parameters are determined through in the following way
+\begin{center}
+	$H_{ij}$ =
+	\begin{cases}
+		$\alpha$ \quad \text{if }  i=j \\
+		$\beta$ \quad \text{if } i and j are nearest neighbouring atoms (n.n.a.) \\
+		0  \quad \text{ if } \text{ i and j are not n.n.a.} \\
+	\end{cases}
+\end{center}
+\\
+\\
+Using these conventions we can rewrite the Hückel Hamiltonian as follows
+\newline
+\begin{equation}
+	\hat{H} = \sum_{m}\alpha_m \sum_{\sigma} \hat{a}^{\dagger}_{m\sigma}\hat{a}_{m\sigma}  + \sum_{m,n}^{n.n. a.} \beta_{mn}\sum_{\sigma} \hat{a}^{\dagger}_{m\sigma}\hat{a}_{n\sigma}+\hat{a}^{\dagger}_{n\sigma}\hat{a}_{m\sigma}
+\end{equation}
+
+\\
+In general the $\beta$ term is refered to as the resonance or hopping integral and are situated off the main diagonal. The $\alpha$ values are situated on the diagonal and represent the energy of the electron in the $p_z$ orbital due to the mean field of the other electrons and nuclei present in the molecular system.
+\\
+\\
+Though the Hamiltonian in the Hückel approach is simplification of the realistic situation, due too its neglect of correlation between the electrons, it does prove to have some merit when analyzing the electronic structure of the $\pi$ system. Diagonalisation of $\textbf{H}_{Hückel}$ provides the structure of the different symmetry combinations of the $\pi$ system and their relative energy and degeneracy.
+
+\subsection{The Hubbard model}
+
+The Hubbard model approaches a molecular system in a different way than the Hückel method. In the Hubbard model the description of the system is not done through the means of spin orbitals but through sites. Each site represents an atom which can carry two electrons at most and the different sites are connected with each other. The Hubbard Hamiltonian is constructed using the following Hamiltonian.
+
+\begin{equation}
+	\hat{H} = \sum_{<i,j>,\sigma}^{N}-t_{ij}\left (\hat{a}_{i,\sigma}^{\dagger} \hat{a}_{j,\sigma} + \hat{a}_{j,\sigma}^{\dagger} \hat{a}_{i,\sigma} \right) + \sum_{i=1}^{N}U_i \hat{n}_{i\downarrow}\hat{n}_{i\uparrow}
+\end{equation}
+\begin{equation*}
+	\hat{n}_{i\sigma} = \hat{a}_{i,\sigma}^{\dagger} \hat{a}_{i,\sigma}
+\end{equation*}
+\\
+The easiest way to represent a Hubbard system can thus be done through the adjacency matrix  \textbf{A}. For a system consisting of N sites that can interact with each other the adjacency matrix can be defined as
+\begin{equation}
+	\textbf{A}=
+	\begin{bmatrix}
+	U_1 & t_{12} & t_{13} & \dots & t_{1N} \\
+	t_{21} & U_2 &t_{23} & \dots & t_{2N} \\
+	t_{31} & t_{32} & U_3 & \dots & t_{3N} \\
+	\vdots & \vdots & \vdots & \ddots & \vdots \\
+	t_{N1} & t_{N2} & t_{N3} & \dots & U_N \\
+	\end{bmatrix}
+\end{equation}
+\\
+Which contains all the necessary information to deduce a general structure from the system in questoin. One can see the analogy with the Hückel Hamiltonian easily, however when comparing both Hamiltonians we can see one main difference. In the Huckel Hamiltonian there was the presence of the $\alpha$ parameter whereas the Hubbard Hamiltonian does not contain this term. Instead of this $\alpha$ like term the Hubbard Hamiltonian has a two electron interaction term that takes the inter electronic interaction of two electrons present on the same site.
+\\
+\\
+In addition to this extra term it is no longer sufficient to diagonalize a one determinant wave function for the Hubbard Hamiltonian. Indeed, in order to formulate the exact solution of the Hubbard Hamiltonian it is required to construct the basis for all possible electron configurations in the site basis. The amount of electron configurations is dependent on the total spin $S_z$ of the system and is generally given by the following equation (in case of half-filling, i.e. the amount of electrons equals the amount of sites present in the system of interest)
+\begin{equation}
+	\binom{N}{N_{\alpha}}\binom{N}{N_{\beta}}
+\end{equation}  
+For the complete description these site bases need to constructed for all the different spin sectors that are possible for N electrons
+\begin{equation}
+	\lvert S_{z,tot} \rvert \in \left[ 0,\frac{1}{2},\frac{1}{2}, \dots, \frac{N}{2} \right]
+\end{equation}
+The Hubbard Hamiltonian is then constructed by applying the operator $\hat{H}$ to every one of these basis functions and diagonalizing the resulting matrix.
+However due to the absence of a spin inversion component in the Hubbard Hamiltonian matrix this comes to do diagonalising every spin sector seperately.
+\\
+\\
+As a final note one can compare these methods to other methods well established methods in quantum chemistry. As was mentioned above in the comparison between their respective Hamiltonians we can make the analogy that the Hückel method compares to the Hubbard method in a similar way that Hartree-Fock compares to Full CI. Indeed, Hückel does not take inter electronic interaction into account and corresponds to a mean field solution in which the electrons are not correlated. Hubbard on the other hand takes all possible electron configurations into account and minimizes the energy with respect to the delocalization phenomena, represented through the t parameter, and repulsive interactions, represented through the U parameter.  
+
+\end{document}
+
