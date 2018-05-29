@@ -1,0 +1,1156 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage[a4paper]{geometry}
+\usepackage{graphicx}
+\usepackage{setspace}
+\linespread{1.213}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{cite}
+\usepackage[utf8]{inputenc}
+\usepackage[font=small, labelfont=bf]{caption}
+\usepackage{bm}
+\usepackage{tikz}
+
+
+
+\begin{document}
+\title{Machine Learning: The Hubbard model}
+\author{Niels Billiet}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+\section{Introduction}
+
+In this research we will be focusing on the study of the applicability of neural networks in the field of quantum chemistry. Specifically we will focus our research on the Hubbard model which is a model that is used in both chemistry and physics. The appeal of this model is that it is a simplified model that can be used to provide insights in the wave function of molecular systems without explicitly computing the complex integrals required for traditional computational methods. Nevertheless even the simplified Hubbard model still remains difficult to solve when the complexity of the systems increases. It is here that we wish to find out if neural networks could potentially aid in the further development and improvement of quantum chemical methods.
+\\
+\\
+Over the last years the interest in neural networks has increased due to its success in the analysis of complex non linear problems which proved difficult to analyze and solve using the traditional learning methods\cite{Penedo, Hinton2012, Tian, Lawrence1996, Carleo2016, GIacomini2001}. However the applicability of this method has not yet been fully investigated when it concerns quantum chemistry and quantum mechanics. As such we wish to perform an exploratory study of this method in conjunction with a well known method like the Hubbard model which is more easily interpretable than conventional quantum chemical methods.
+\\
+\\
+To this end we will focus on the analysis of the ground state energy of two specific Hubbard systems. One being the standard system of a $H_2$ like molecule because of its well established properties. The other system of interest will be the ground state of the $\pi$ system of a cyclobutadiene like system. To this means we will perform the characterization of the networks on the $H_2$ system and the evaluation of feature extraction on the cyclobutadiene like system. 
+\\
+\\
+In the first section of the research we will focus on how well a neural network performs on modeling the potential energy surface of the ground state of the $H_2$ system. Solving the Hubbard Hamiltonian for this system gives a very characteristic potential energy surface that can be visualized in a 3D space. As such we can completely visualize a neural network its performance which will be indicative of its predictive capabilities and to what extent we can produce reliable results. To this means we will also compare different networks of varying complexity to ascertain the effect of network size and complexity on its performance.   
+\\
+\\
+In the second part of the research our aim is to investigate the learned features of the network and the overall generality  when the input data is a more complex chemical system. The Hamiltonian has specific properties such as symmetry which we can exclude from the dataset and which we can consequently evaluate through the use of testing data to study the incorporation of these fundamental properties by these networks. Another aspect that could prove to be the interest is the ability of the network to evaluate other structures than its original input. The original cyclobutadiene like structure we will use as the training input is not the only system we can form with four atoms, as such we will also evaluate the network on its performance on structures that differ from this original training input. The results from this would be indicative of the ability of the networks to generalize 
+
+\newpage
+\section{Theoretical Background: The Hubbard Hamiltonian}
+
+The Hamiltonian operator $\hat{H}$ represents the the energy operator  and is defined as follows
+\begin{equation}
+\begin{split}
+\hat{H} & = \hat{T} + \hat{V} \\
+& = -\frac{1}{2}\sum_{i}^{N} \hat{\nabla_i} -\sum_{A}^{M}\sum_{i}^{N} \frac{Z_A}{\lvert r_i - R_A \rvert} + \sum_{i>j}^{N} \frac{1}{r_{ij}}
+\end{split} 
+\end{equation}
+$\hat{H}$ is comprised of a kinetic energy component $\hat{T}$ and a potential energy component $\hat{V}$. Here, $\hat{\nabla_i}$ describes the momentum of the electron i, $\frac{1}{\lvert r_i - R_A \rvert}$ describes the nuclear attraction from electron i to nucleus A and  $\frac{1}{r_{ij}}$ describes the inter electronic repulsion between two electrons i and j
+\\
+\\
+The energy of a system can be obtained by solving the Schrödinger equation 
+\begin{equation}
+\hat{H}\Psi = E\Psi
+\end{equation}
+where $\Psi$ represents the wave function of the system and E the energy corresponding to the wave function of that system. However when dealing with many body systems the exact solution is difficult to obtain by traditional means and as a consequence many methods were developed that approximate this exact solution.\cite{Surj1989}
+\\
+\\
+In quantum chemistry these many body systems an be concisely described using second quantization.  
+
+\subsection{Second quantization algebra}
+The representation of the wave function in second quantization is done through the use of the creation and annihilation operators. In this formalism every wave function starts out as a vacuum state $\lvert vac \rangle$, which represents a normalized state containing no particles. Description of the wave function is consequently achieved through a product of creation operators working in on this vacuum state.
+\\
+\\
+The creation operator $\hat{a}^\dagger$ and  annihilation operator $\hat{a}$ adhere to the following algebraic relationships (when describing fermionic particles).\cite{Surj1989}
+\begin{equation}
+	\{\hat{a}^\dagger_i, \hat{a}^\dagger_j\} = 0
+\end{equation}
+\begin{equation}
+	\hat{a}^\dagger_i\hat{a}^\dagger_, = 0 \quad \text{if } i=j
+\end{equation}
+\begin{equation}
+	\{\hat{a}_{i}, \hat{a}^{\dagger}_{k} \} = \delta_{ij}
+\end{equation}
+These algebraic relations ensure that the described system adhere to the Pauli principle. With respect to this research we will discuss two different methods that are often used in chemistry, i.e. the Hückel model and the Hubbard model.
+
+\subsection{The Hückel method}
+
+The Hückel method is a method that is used to obtain information about the $\pi$ system of a molecular system. Starting from the $p_z$ spin orbitals of the molecular system, we construct a model based solely upon one electron integrals. The Hückel Hamiltonian is then given by \cite{Surj1989}
+\newline
+\begin{equation}
+\hat{H} = \sum_{\mu, \nu} h_{mn}\hat{a}^{\dagger}_{\mu}\hat{a}_{\nu} = \sum_{m,n} \sum_{\sigma} }h_{mn}\hat{a}^{\dagger}_{m\sigma}\hat{a}_{n\sigma}
+\end{equation}
+\newline
+where we have decomposed the spin orbitals $\{\mu, \nu\}$ into their corresponding spatial orbitals $\{m,n\}$ and their spin $\{\sigma\}$.
+\\
+\\
+A simplification that makes the Hückel Hamiltonian easily solvable is that the one electron terms $h_{mn}$ are not calculated through integration of the spin orbitals but through assignment of empirical parameters. The parameters are determined in the following way.
+\begin{center}
+	$h_{mn}$ =
+	\begin{cases}
+		$\alpha$ \quad \text{if }  m=n \\
+		$\beta$ \quad \text{if } m and n are nearest neighbouring atoms (n.n.a.) \\
+		0  \quad \text{ if } \text{ m and n are not n.n.a.} \\
+	\end{cases}
+\end{center}
+\\
+\\
+Using these conventions we can rewrite the Hückel Hamiltonian as follows,
+\newline
+\begin{equation}
+\hat{H} = \sum_{m}\alpha_m \sum_{\sigma} \hat{a}^{\dagger}_{m\sigma}\hat{a}_{m\sigma}  + \sum_{m,n}^{n.n. a.} \beta_{mn}\sum_{\sigma} \hat{a}^{\dagger}_{m\sigma}\hat{a}_{n\sigma}+\hat{a}^{\dagger}_{n\sigma}\hat{a}_{m\sigma}
+\end{equation}
+where the $\beta$ term is referred to as the resonance or hopping integral and is situated off the main diagonal. The $\alpha$ values are situated on the diagonal and represent the energy of the electron in the $p_z$ orbital due to the mean field of the other electrons and nuclei present in the molecular system.
+\\
+\\
+Though the Hamiltonian in the Hückel approach is a simplification of the realistic situation, due to its neglect of correlation between the electrons, it does prove to have merit when analyzing the electronic structure of the $\pi$ system. Diagonalization of $\textbf{H}_{Hückel}$ provides the structure of the different symmetry combinations of the $\pi$ system, their relative energy in function of $\alpha$ and $\beta$ and the degeneracy of the different electronic states.
+
+\subsection{The Hubbard model}
+
+The Hubbard Hamiltonian is constructed in the following way.\cite{Surj1989}
+
+\begin{equation}
+\hat{H} = \sum_{<i,j>,\sigma}^{N}-t_{ij}\left (\hat{a}_{i,\sigma}^{\dagger} \hat{a}_{j,\sigma} + \hat{a}_{j,\sigma}^{\dagger} \hat{a}_{i,\sigma} \right) + \sum_{i=1}^{N}U_i \hat{n}_{i\downarrow}\hat{n}_{i\uparrow}
+\end{equation}
+\begin{equation*}
+\hat{n}_{i\sigma} = \hat{a}_{i,\sigma}^{\dagger} \hat{a}_{i,\sigma}
+\end{equation*}
+With the most important change being the inclusion of the two electron operator $\hat{n}_i$.
+\\
+\\
+The easiest way to represent a Hubbard system can be done through the adjacency matrix  \textbf{A}. For a system consisting of N sites that can interact with each other, the adjacency matrix can be defined as
+\begin{equation}
+\textbf{A}=
+\begin{bmatrix}
+U_1 & t_{12} & t_{13} & \dots & t_{1N} \\
+t_{21} & U_2 &t_{23} & \dots & t_{2N} \\
+t_{31} & t_{32} & U_3 & \dots & t_{3N} \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+t_{N1} & t_{N2} & t_{N3} & \dots & U_N \\
+\end{bmatrix}
+\end{equation}
+\\
+which is a Hermitian matrix. As such all the unique/defining information is contained within the upper or lower triangle of the matrix.  This upper/lower triangle contains all the necessary information to deduce a general structure from the system in question. 
+\\
+\\
+In the Huckel Hamiltonian there was the presence of the $\alpha$ parameter whereas the Hubbard Hamiltonian does not contain this term. Instead of the $\alpha$ term, the Hubbard Hamiltonian has a two electron interaction term that takes the inter electronic interaction of two electrons present on the same site into account.
+\\
+\\
+Due to the presence of the two electron operator in the Hubbard Hamiltonian it is no longer sufficient to diagonalize a one determinant wave function. In order to formulate the exact solution of the Hubbard Hamiltonian it is required to generate all possible electron configurations in the site basis. The amount of electron configurations is dependent on the total spin $S_z$ of the system and is generally given by the following equation (in case of half-filling, i.e. the amount of electrons equals the amount of sites present in the system of interest).
+\begin{equation}
+\binom{N}{N_{\alpha}}\binom{N}{N_{\beta}}
+\end{equation}  
+For the complete description of the system these site bases need to be generated for all the different spin sectors that are possible for N electrons.
+\begin{equation}
+\lvert S_{z,tot} \rvert \in \left[ 0,\frac{1}{2},\frac{1}{2}, \dots, \frac{N}{2} \right]
+\end{equation}
+The Hubbard Hamiltonian is then constructed by applying the operator $\hat{H}$ to every one of these electron configurations and consequently diagonalizing the resulting matrix. However due to the absence of a spin inversion component in the Hubbard Hamiltonian this comes down to diagonalize every spin sector separately.
+\\
+\\
+As a final note one can compare these methods to other well established methods in quantum chemistry. As was mentioned above in the comparison between their respective Hamiltonians we can make the analogy that the Hückel method compares to the Hubbard method in a similar way that Hartree-Fock compares to Full CI. Indeed, Hückel does not take inter electronic interaction into account and corresponds to a mean field solution in which the electrons are not correlated. Hubbard on the other hand takes all possible electron configurations into account and minimizes the energy with respect to the delocalization phenomena, represented through the t parameter, and repulsive interactions, represented through the U parameter between the different configurations.  
+
+\newpage
+\section{Neural networks}
+
+\subsection{Introduction}
+
+Over the last couple of years there has been a significant increase in the collection of data about all sorts of subjects. With this increase in data the desire to develop tools that are capable of processing these large batches of data grew as well. This is where tools such as artificial intelligence enter to help. 
+\\
+\\
+Current artificial intelligence technology contains a large set of different tools that all rely on different algorithms to solve different tasks. All of these algorithms find there origin in statistical learning. In statistics there is a differentiating between three different learning methods.\cite{Bishop2013, Haykin2008, Budumu, P.Murphy1991, TrevorHastie2009}
+\begin{itemize}
+	\item \textbf{Unsupervised learning}, a model is trained on data that contains unlabeled input data.
+	\item \textbf{Semi-supervised learning}, a model is trained on data that contains both labeled and unlabeled input data.
+	\item \textbf{Supervised learning}, a model is trained on data that consists of labeled input data.
+\end{itemize}
+Though different in their method they are all aimed towards the same end result, being minimizing some error function related to the data set. Generally the tasks that are learned through the use of such methods consists of 
+\begin{itemize}
+	\item \textbf{Classification}, problem where a certain input vector $\textbf{x}_n$ is mapped to a target vector $\textbf{t}_n$. This target vector elements can take on discrete values depending on the amount of available classes  C.
+	\begin{equation*}
+		t_i \in \{0,1,2,\dots, C_i\}
+	\end{equation*}
+	Where $C_i$ is the amount of available classes for target component i.   
+	\item \textbf{Regression}, mapping from a input vector \textbf{x} to a continuous output vector \textbf{y}. 
+\end{itemize} 
+\\
+\\
+Many of these traditional learning methods however are only sufficient when used to describe simple problems. When the regression problem becomes a complex non linear function or the classification problem is not separable by linear functions it becomes harder to accurately describe the problem at hand using the traditional learning methods. Neural networks offer a possible solution to this as it makes non linear maps of input features to reproduce an output.
+\\
+\\
+The basis for these neural networks was first formulated in 1943 an attempt to model neuronal activity\cite{McCullock, Wang2017}. The similarities between the biological brain and these artificial constructs can be summarized as such
+\begin{itemize}
+	\item The brain consists of a large collection of neurons that form a strongly connected netwerk that cooperates in order to solve a problem, perform a complex action, etc.\\$\rightarrow$ \textbf{Strong interconnectivity}
+	\item A desired action arises only when the brain receives a specific signal for example under the form of a neurotransmitter. This signal is transmitted starting from a small number neurons to a large collection. \\$\rightarrow$ \textbf{Starting from a simple input signal an output is generated through amplification and transformation of the original signal}.
+	\item In order for a signal to be transmitted through a neuron, a certain threshold membrane polarization must occur within the neuron's cell membrane. \\$\rightarrow$ \textbf{Only input signals of a certain strength will result in an output} 
+	\item In the brain specific regions are specified towards performing or interpreting specific actions. \\$\rightarrow$ \textbf{Presence of local specialization in the network} 
+\end{itemize}
+
+\subsection{Description of neural networks}
+
+The neural network is generally described through three main mathematical structures each made up of by common components.\cite{Bishop2013, Haykin2008, Budumu, P.Murphy1991, TrevorHastie2009}
+\begin{enumerate}
+	\item \textbf{Input layer}, The first layer of the neural network consists of a representation of the given input data (features). This data is represented as a tensor and will be used a basis input for consecutive computations in the following layers to transform it to the desired output.
+	\item \textbf{Hidden layer(s)}, a data structure consisting of \textbf{hidden units}, also referred to as \textbf{nodes} or neurons, which perform a computation on the output of the previous layer. Additionally there is also a \textbf{bias unit} present in each hidden layer. After the computation within the node it's output gets transformed by a \textbf{activation function} and will serve as the input for the following layer.
+	\item \textbf{Output layer}, positioned after the last hidden layer and represents the output. This data is represented through a tensor as well.
+\end{enumerate}
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.5\textwidth]{"simplified neural network"}
+	\caption{Example of a small scale densely connected neural network consisting of four layers in total. The input layer consists of 3 different features, the hidden layers each consist of four different nodes and the output consists of one target value\cite{neuralnetwerkafbeelding}}
+	\label{fig:structure}
+\end{figure}
+
+\subsubsection{Hidden units}
+
+The fundamental unit of the neural network is the hidden units or nodes. These nodes represent a linear combination of the outputs from the previous layer. Depending on the interconnectivity of the layers with respect to each other we can go from a one to one mapping to a mapping of the whole previous layer in each node of the current layer. Suppose that the previous layer, numbered as [L-1], in the network consists of $N_L$ nodes each characterized by an output $\sigma$, then we can express the form of the cache of node i in the current layer [L] as follows\cite{Bishop2013}\cite{Goodfellow} 
+
+\begin{equation} \label{cache}
+z^{[L]}_{i} = \sum_{j}^{N_{L}} w_{ij}^{[L]}\sigma_{j}^{[L-1]} + b_{i}^{[L]}
+\end{equation}
+\\
+where in this equation we have assumed that the network is a dense network, i.e. a fully connected network. In this equation the $b_{i}^{[L+1]}$ represents the bias of the node. More about this bias value shall be discussed in the following section.  From this equation it becomes apparent quickly that depending on the amount of nodes in the previous layer and in the current layer the possibility to create different linear combinations of information increases with the layer size.
+
+\subsubsection{Activation function and layer output}
+
+The next important component of the neural network and some might argue the most important component is the activation unit.  The activation unit serves the purpose of transforming the cache of a node, which is a linear combination in a nonlinear fashion. Let h be a non linear function, then the output $\sigma_i^{[L]}$ of node i in layer [L] can be defined as\cite{Bishop2013, Goodfellow}
+\begin{equation}
+\sigma_{i}^{[L]} = h(z^{[L]}_{i})
+\end{equation}
+Any non linear function can serve as an activation function in a neural network. There are however two requirements that need to be fulfilled
+\begin{enumerate}
+	\item The activation function needs to be defined across the whole domain. If not, then the network will have inherent discrepancies when it comes to predicting the output value of an input features in certain regions.  
+	\item The activation function needs to be differentiable. This relates to the training algorithm and will be discussed later on.
+\end{enumerate} 
+It is the nonlinearity of the activation function that grants the neural network  its strength when it comes to modeling. Indeed if the activation function would be absent than the neural network would be reduced to a consecutive linear regression algorithm and would fail to properly process non linear data.  
+\\
+\\
+A logical choice of activation function for regression like problems, and the ones that will be utilized in this research, are those of the ReLU family. The ReLU type functions or \textit{Rectified Linear activation Unit} consists of three different functions: ReLU, Leaky ReLU and Parametric ReLU
+\begin{center}
+	$
+	\[ReLU(x) =
+	\begin{cases}
+	x       & \quad \text{if } x>0\\
+	0  & \quad \text{if } x<0
+	\end{cases}
+	$
+\end{center}
+\begin{center}
+	$
+	\[LReLU(x) =
+	\begin{cases}
+	x       & \quad \text{if } x>0\\
+	0,01x  & \quad \text{if } x<0
+	\end{cases}
+	$
+\end{center}
+\begin{center}
+	$
+	\[PReLU(x) =
+	\begin{cases}
+	x       & \quad \text{if } x>0\\
+	ax  & \quad \text{if } x<0 \quad \text{with } $a \in$ ]0,1[
+	\end{cases}
+	$
+\end{center}
+\\
+The non linearity of these functions is centered around the origin and performs a sign discrimination (see figure \ref{fig:relu}). It should be apparent however that the three different activation functions presented here represent a stepwise modification in  degree of signal dampening. Where the ReLU function dampens a signal beyond a certain threshold ($x<0$) the Leaky ReLU function allows for a small negative signal to be passed throughout the network. The parametric ReLU in comparison allows for a fine tuned signal dampening when it concerns a negative signal with the only boundary condition being $a \neq 1$ as this would revert the activation function to a linear function.
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\textwidth]{"actfunc"}
+	\caption{Activation functions of the ReLU family \cite{relu}}
+	\label{fig:relu}
+\end{figure}
+\\
+\\
+As was mentioned in the previous section there is a bias node present in each cache of the node. This bias node serves the purpose of causing a better fit to the training\cite{Goodfellow}. The presence of this value allows the activation to be shifted from it's original origin. In terms of the ReLU type activation function the bias allows the dampening segment of the function to be shifted in order to fit the data more exactly. This bias parameter thus represents an extra degree of freedom which requires optimization during the training phase of the neural network. 
+
+\subsection{Mathematical description of the neural network}
+
+Using the definitions from the structural components defined in the previous sections we can construct the mathematical framework that is used in the creation and application of neural networks.
+\\ 
+\\
+Suppose we have two layers [L-1] and [L] that are fully connected with each other. Let $\Sigma^{[L]}$ be the output vector of layer L and $\textbf{Z}^{[L]}$ be the cache vector of layer (L+1), then the function f that maps the vector $\bm{\sigma}^{[L-1]}$ to $\textbf{Z}^{[L]}$ performs a mapping between two real vector spaces. 	
+\begin{equation}
+f(\bm{\sigma}^{[L-1]}) = \textbf{Z}^{[L+1]} \quad \text{where } f:\Re^{N_L} \rightarrow \Re^{N_{L+1}}
+\end{equation}
+Using the defintion from one element of the cache vector (see equation \ref{cache}) we can construct the complete cache vector $\textbf{Z}^{[L]}$. Let $\sigma^{[L-1]}_i$ be the $i^{th}$ component of the output vector $\bm{\sigma}^{[L-1]}$ then
+\begin{equation}
+f\left(
+\begin{bmatrix}
+\sigma^{[L-1]}_1 \\
+\sigma^{[L-1]}_2 \\
+\vdots \\
+\sigma^{[L-1]}_{N_L}
+\end{bmatrix}
+\right)	
+\rightarrow
+\begin{bmatrix}
+\sum_{i=1}^{N_{L-1}}w_{1,i}^{[L]}\sigma_{i}^{[L-1]} + b^{[L]}_1 \\
+\sum_{i=1}^{N_{L-1}}w_{2,i}^{[L]}\sigma_{i}^{[L-1]} + b^{[L]}_2 \\
+\vdots \\
+\sum_{i=1}^{N_{L-1}}w_{N_{L},i}^{[L]}\sigma_{i}^{[L-1]} + b^{[L]}_{N_{L}} \\
+\end{bmatrix}
+\end{equation}
+Each component of the cache vector describes a linear combination of the output vector described by a set of weights $w_{ji}^{[L+1]}$ and a bias component $b_j^{[L+1]}$. One recognizes the dot product in each cache component and thus we can rewrite this cache vector as follows.  
+\begin{equation}
+\begin{bmatrix}
+\sum_{i=1}^{N_{L-1}}w_{1,i}^{[L]}\sigma_{i}^{[L-1]} + b^{[L]}_1 \\
+\sum_{i=1}^{N_{L-1}}w_{2,i}^{[L]}\sigma_{i}^{[L-1]} + b^{[L]}_2 \\
+\vdots \\
+\sum_{i=1}^{N_{L-1}}w_{N_{L},i}^{[L]}\sigma_{i}^{[L-1]} + b^{[L]}_{N_{L}} \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+\textbf{W}^{[L]}_1 \cdot \bm{\sigma}^{[L-1]}\\
+\textbf{W}^{[L]}_2 \cdot \bm{\sigma}^{[L-1]}\\
+\vdots \\
+\textbf{W}^{[L]}_{N_{L+1}} \cdot \bm{\sigma}^{[L-1]}\\
+\end{bmatrix}
++
+\begin{bmatrix}
+b^{[L]}_1 \\
+b^{[L]}_2 \\
+\vdots \\
+b^{[L]}_{N_{L}}
+\end{bmatrix}
+\end{equation}
+Where we have also split up the cache vector into two components. This column of dot products can then be rewritten into a matrix product between a $(N_{L+1} \times N_L)$ dimensional matrix and a $(N_L \times 1)$ dimensional vector resulting in 
+\begin{equation}
+\begin{bmatrix}
+\textbf{W}^{[L]}_1 \cdot \bm{\sigma}^{[L-1]}\\
+\textbf{W}^{[L]}_2 \cdot \bm{\sigma}^{[L-1]}\\
+\vdots \\
+\textbf{W}^{[L]}_{N_{L+1}} \cdot \bm{\sigma}^{[L-1]}\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+w^{[L]}_{1,1} & w^{[L]}_{1,2} & \dots & w^{[L]}_{1,N_{L-1}} \\
+w^{[L]}_{2,1} & w^{[L]}_{2,2} & \dots & w^{[L]}_{2,N_{L-1}} \\
+\vdots & \vdots & \ddots & \vdots \\
+w^{[L]}_{N_{L},1} & w^{[L]}_{N_{L},2} & \dots & w^{[L]}_{N_{L},N_{L-1}}
+\end{bmatrix}
+\begin{bmatrix}
+\sigma^{[L-1]}_1 \\
+\sigma^{[L-1]}_2 \\
+\vdots \\
+\sigma^{[L-1]}_{N_L} \\
+\end{bmatrix} 
+\end{equation}
+As such we can write the final form of the output to cache mapping as
+\begin{equation}
+f\left( \bm{\sigma} ^{[L-1]}\right) = \textbf{W}^{[L]}\bm{\sigma}^{[L-1]}+\textbf{B}^{[L]}
+\end{equation}
+which corresponds to a linear mapping utilizing the weight matrix $\textbf{W}^{[L+1]}$. However one can extend this output to cache mapping to the output to output mapping by including the activation function h.
+\begin{equation}
+h
+\left(
+\begin{bmatrix}
+z^{[L]}_1 \\
+z^{[L]}_2 \\
+\vdots \\
+z^{[L]}_{N_{L+1}} \\
+\end{bmatrix}
+\right)
+=	
+\begin{bmatrix}
+h\left(z^{[L]}_1\right) \\
+h\left(z^{[L]}_2 \right) \\
+\vdots \\
+h\left(z^{[L]}_{N_{L}} \right) \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+\sigma^{[L]}_1 \\
+\sigma^{[L]}_2 \\
+\vdots \\
+\sigma^{[L]}_{N_{L}}
+\end{bmatrix}
+= \bm{\sigma}^{[L]}		 
+\end{equation}
+As such we can write the layer to layer mapping function f as non linear transformation of a linear mapping
+\begin{equation*}
+f:\Re^{N_{L-1}}\rightarrow\Re^{N_{L}}\rightarrow\Re^{N_{L}}
+\end{equation*}
+\begin{equation}
+f\left(\bm{\sigma}^{[L-1]}, \textbf{W}^{[L]}, \textbf{B}^{[L]}, h\right) = h\left(\textbf{W}^{[L]}\bm{\sigma}^{[L-1]}+\textbf{B}^{[L]}\right) = \bm{\sigma}^{[L]}
+\end{equation}
+Using the layer to layer mapping function f we can represent the network function F for a network containing K hidden layers, a set of weight matrices $\{\textbf{W}\}$ and a set of bias vectors $\{\textbf{B}\}$ as (assuming every layer uses the same activation function h)
+\begin{equation}\label{network symbolic}
+F: \Re^{N_0} \xmapsto{f} \Re^{N_1} \xmapsto{f} \Re^{N_2} \xmapsto{f} \dots \xmapsto{f} \Re^{N_{K}} \xmapsto{f} \Re^{N_{K+1}}
+\end{equation}
+\begin{equation}\label{network function}
+F\left(\textbf{X}, \{\textbf{W}\}, \{\textbf{B}\}\right) = \textbf{W}^{[K]}f\left(f\left(\dots f\left(\textbf{X},\textbf{W}^{[1]}, \textbf{B}^{[1]}\right) \dots \right), \textbf{W}^{[K-1]}, \textbf{B}^{[K-1]}\right) + \textbf{B}^{[K]}
+\end{equation} 
+\subsection{Training of the neural network}
+
+In order for the neural network to capture any features present in the data a learning process is required. In order for the network to learn something we require three different datasets \cite{Bishop2013, Haykin2008, Budumu, P.Murphy1991, TrevorHastie2009}.
+\begin{enumerate}
+	\item \textbf{Training dataset}, used as the source of knowledge which the network will use to adjust its weights. Via weight update the network will attempt to capture any features present in the training data.
+	\item \textbf{Validation dataset}, used a reference to check if the network is learning the features correctly. This dataset is constructed similarly to the training data but should not be present in the actual training data. Correct interpretation of this data is considered to be an indication that the network has captured the important features of the data. 
+	\item \textbf{Test dataset}, final evaluation dataset after the training is done. Performance on this data is considered as an unbiased indication concerning the robustness and accuracy of the network.
+\end{enumerate}
+\\
+\\
+Training a network generally consists of three phases and will be discussed in the following sections.
+\begin{enumerate}
+	\item Initialization phase
+	\item Training phase
+	\begin{enumerate}
+		\item Feed-forward phase
+		\item Back propagation phase
+		\item Validation phase
+	\end{enumerate}
+	\item Test phase
+\end{enumerate}
+
+\subsubsection{Initialization phase}
+
+After the network architecture has been decided upon the initialization phase has commenced. Indeed, making the structure of the network does not suffice for the training phase to be initiated. Before training can be initiated we must first assign an initial value to the weights of the network. Many different methods of drawing weights exist.
+\begin{enumerate}
+	\item \textbf{Zero/one initializer} Apply a uniform weight of zero or one across the whole weight space. Standardly this is not done due to the heavy initial oscillations of the network evaluation function
+	\item \textbf{Uniform initializer} Randomly draw weight from a predefined or custom continuous uniform distribution.
+	\item \textbf{Gaussian initializer} Randomly draw weight from a Gaussian distribution with a predefined mean and standard deviation.
+	\begin{itemize}
+		\item Adaptive variance algorithm, which adjust the width of the weight distribution based on the weight space dimension.
+		\item Truncated normal sampling, sampling within one or two standard deviations of the mean and redrawing extreme values.
+	\end{itemize} 
+	\item \textbf{Orthogonal initializer} Randomly generates a orthogonal weight matrix. 
+\end{enumerate}
+Different initialization algorithms will have a different effect on the training phase. The following effects have been know to be affected by the initialization \cite{Sutskever2013, Kumar}.
+\begin{itemize}
+	\item Initializations that are chosen poorly can have a detrimental effect on the speed of convergence.
+	\item Besides having a detrimental effect to the speed it can also possibly stall the convergence.
+\end{itemize}
+
+\subsubsection{Training phase}
+
+The training phase consist of many sub phases as was already mentioned in the introduction of this section. We shall refer to a training cycle as an \textbf{epoch} and the structure of this training cycle is summarized below. Discussion of the individual steps follows after the summary.
+\begin{enumerate}
+	\item Begin training epoch
+	\begin{itemize}
+		\item Send an input vector forward through the network.
+		\item Compute the errors.
+		\item Update the network function.
+		\item Repeat until all the training data has been processed.
+	\end{itemize}	
+	\item End training epoch.
+	\item Repeat until predetermined amount of epochs is completed.
+\end{enumerate}
+\\
+\\
+\paragraph{Feed forward phase}
+During the training phase the input data gets fed to the network. this is referred to as the feed forward phase as the original data moves down the network and undergoes consecutive non linear transformations until a predicted outcome is achieved.  
+\\
+\\
+Suppose we have a input $\textbf{x}$ which has a predicted value $\textbf{y}$ through the evaluation of the network function $F\left(\textbf{x}, \{\textbf{W}\}, \{\textbf{B}\} \right)$.
+\begin{equation*}
+F\left(\textbf{x}, \{\textbf{W}\}, \{\textbf{B}\} \right) = \textbf{y}
+\end{equation*}
+Then we can evaluate the loss of the prediction $\textbf{y}$ with respect to a target vector $\textbf{t}$ as \cite{Bishop2013} \cite{Hastie}
+\begin{equation}
+E\left(\{\textbf{W}\}\right) = \frac{1}{2} \left( \textbf{y} - \textbf{t} \right)^2
+\end{equation}
+This function is dependent on all the coefficients of the network function. In order to minimize the loss of the network we must find a set of weights where the following condition is met. 
+\begin{equation}
+\nabla_{W}E = 0
+\end{equation}
+Where $\nabla_{W}$ is the derivative with respect to all the weights present in the network function F. However looking at equation \ref{network symbolic} and \ref{network function} one notices that the closer the weights are situated to the input vector, the more embedded these weights become in further weights. As such the weights closest to the output are evaluated first. 
+
+\paragraph{Back propagation phase}
+
+As was mentioned above we have to evaluate the derivative of the network loss with respect to the network weight. However, the error function is not directly dependent on the network weight.
+\begin{equation}
+	E\left(\textbf{y}\right) \rightarrow \textbf{y}(\bm{\sigma}) \rightarrow \bm{\sigma}(\textbf{Z}) \rightarrow \textbf{Z}(w)
+\end{equation}
+As such the chain rule must be applied to calculate the gradient of the weights
+\begin{equation}
+	\frac{\partial E}{\partial w} = \frac{\partial E}{\partial y}\frac{\partial y}{\partial \sigma}\frac{\partial \sigma}{\partial z}\frac{\partial z}{\partial w}
+\end{equation}
+Where we have assumed that the output is scaled linearly. The derivation for two cases will be done below to demonstrate the increase of complexity the further down the network we go to the weights connected to the input layer
+\\
+\\
+Suppose we have a network with L hidden layers then we can evaluate the derivative of the weight from a node j in layer L to an output node i in layer (L+1) as 
+
+\begin{equation}
+\frac{\partial E }{\partial w_{j,i}^{[L+1]}} &= \Delta_i \sigma_j^{[L]} \quad \text{ with } \Delta_i = (y_{i}-t_{i})
+\end{equation}
+The same derivation can be done for the weight of a node k in layer (L-1) connected to node j in layer L. Because node j is connected to all the output nodes in layer (L+1) we will need to evaluate the derivative with respect to all the output nodes
+\begin{equation}
+\frac{\partial E}{\partial w_{k,j}^{[L]}} &= \sum_{m=1}^{N_{L+1}} \left( \Delta_m \frac{\partial y_{m}}{\partial w_{k,j}^{[L]}} \right)
+\end{equation}
+Through use of the chain rule we get 
+\begin{equation}
+\frac{\partial E}{\partial w_{k,j}^{[L]}} = \sum_{m=1}^{N_{L+1}} \left( \Delta_m w_{j,m}^{[L+1]} \frac{\partial \sigma_j^{[L]}}{\partial c_j^{[L]}}\sigma_k^{[L-1]} \right) = \delta_j \frac{\partial \sigma_j^{[L]}}{\partial c_j^{[L]}}\sigma_k^{[L-1]}
+\end{equation}
+Where $\delta_j$ is the total error from node j. As such it becomes clear that in order to update the weight from node k to j we need to evaluate all the derivatives of the connections that node j makes. This is the reason why the learning algorithm is referred to as the back propagation algorithm. In order to update the weights from the nodes closer to the input layer we require the derivatives of the weights to which it is connected and the connections that those nodes make. The errors from the following nodes are thus propagated in a backwards fashion.
+\\
+\\
+The back propagation algorithm is repeated several times each epoch and are updated each training cycle using the gradient.After computation of the gradients the weights are updated using the gradient descent algorithm. The update of the weight at cycle t $w_{ij}^{[L]}(t)$ can be expressed as 
+\begin{equation}
+w_{i,j}^{[L]}(t) = w_{ij}^{[L]}(t-1) - \eta \frac{\partial E}{\partial w_{i,j}^{[L]}}
+\end{equation}
+With $\eta$ the learning rate.
+
+\subsubsection{Training on multiple data points}
+The back propagation as defined above was in the case of the evaluation of a single point of the training data. During the training it is also possible to train each cycle on a batch of data points. 
+\begin{equation}
+w_{j,i}^{[L]}(t) = w_{j,i}^{[L]}(t-1) - \eta\left(\frac{1}{\lvert B\rvert}\sum_{k\inB} \frac{\partial E_k}{\partial w_{j,i}^{[L]} }\right)
+\end{equation}
+Which corresponds to a gradient descent algorithm using noisy gradient\cite{Keskar2016}. Which is logical as the error surface is dynamic and depends on the input vector aswell (assuming that the output data contains some form of noise). The use of these batches will also affect the network performance and is strongly dependent on the batch size used during the training
+\\
+\\
+Networks that are trained on small batches are known to have the following benefits \cite{Smith2017, Keskar2016}
+\begin{itemize}
+	\item Guaranteed convergence to local minima or saddle points
+	\item Convergence to minima is preferred in comparison to saddle points
+	\item Low generalization loss (decreased over fitting rate)
+\end{itemize} 
+Networks trained on large batches, i.e. in the range of the training data set size, also display some well known properties\cite{Smith2017, Keskar2016}
+\begin{itemize}
+	\item Though they convergence as well they tend to be attracted to saddle points instead to minima
+	\item Generalization error in these networks are significantly larger
+\end{itemize}
+As one can see a balance must be struck between increased computation time but a more general model versus a model with high parallelization (through the use of large batches) but with potential loss of generality.
+
+\subsection{The error surface of the neural network}
+
+As was stated in the previous section the goal of the training phase is to optimize the error function with respect to the network weights. However in general this does not prove to be easy due to the fact that the error function of a neural network is non convex function, meaning that besides the global minimum the error surface is also characterized by local minima, maxima and saddle points \cite{Dauphin2014}.
+\\
+\\
+Which is to be expected as the amount of critical points, i.e. local minima, maxima and saddle points, in a N dimensional space tend to increase exponentially with this dimensionality \cite{Dauphin2014}. This increase in critical points can also be expected when analyzing the properties of the weight space. Indeed, when looking at the nodes within a layer L we can argue that the permutation of these nodes (characterized by an unique cache) in the layer will necessarily lead to an equivalent network function.\cite{Bishop2013, Badrinarayanan2015} 
+\\
+\\
+The majority of these critical points also tend to be saddle points (Identifying and attacking the saddle point problem in high-dimensional non-convex optimization). Which forms a major issue in the optimization of said networks as the back propagation algorithm uses a gradient descent optimizer. Since saddle points, minima and maxima all have gradient zero this can cause the optimization to stop on a saddle point. In addition to these large amount of critical points, we also have an error function that tends to have an ill-conditioned Hessian.(fundamentals of deep learning) Meaning that the ratio between the smallest and largest singular value (absolute value of the eigenvalue) is relatively large. This large difference in eigenvalue means that the surface has a gradient that is prone to heavy fluctuations when moving from one point on the surface to the next. \cite{Budumu} 
+\\
+\\ 
+Which is the reason why modified gradient descent algorithms are being used frequently in the training of neural networks\cite{Xu2017}. These modified algorithms use first order and second order moments in order to accelerate the convergence of the network function. One of these optimization methods is ADAM\cite{Kingma2014} which is a modified SGD algorithm utilizing adaptive decaying learning rate from ADAGRAD and RMSprop
+\\
+\\
+These moments represent the mean of the gradient (first order moment) and the uncentered variance (second order moment) of the gradient\cite{Kingma2014}. Acceleration of the convergence through the first order moment is then achieved by remembering the gradient from the previous time step in the optimization procedure and subtracting the current and previous gradient from each other. This average of the gradient is described as an exponentially decaying of past gradients (direction of the gradient).Should the gradient of the previous time step be significantly larger than that of the current then the algorithm will force the update to happen in the direction of the largest descent. \cite{Budumu}
+\\
+\\
+The second moment on the other hand contains a history on the magnitude of the gradients. As such it can be seen as an exponentially decaying variance of the gradient. Looking at the algorithm we see that the first moment is divided in the last step by the square of the second moment. This is to assure two things.
+\begin{itemize}
+	\item Should the gradient start declining very fast then the learning rate is dampened. Dampening of the learning rate prevents the algorithm from jumping from one spot on the error surface to another with irregular leaps
+	\item If the gradient is declining slowly the learning rate is increased. This is to promote movement across the surface
+\end{itemize}
+\begin{algorithm}[H]
+	\caption{ADAM}
+	\begin{algorithmic}[1]
+		\Require $\alpha$: Predetermined step size or learning rate
+		\Require $\beta_1, \beta_2 \in \left[0,1\right[]$: exponential decay rates for the estimated moments of the first order and second order moment
+		\Require $f(\theta)$: A stochastic objective function in terms of the parameters $\theta$ 
+		\Require $\theta_0$: The initial parameter vector
+		\State $m_0 \leftarrow$ 0  
+		\State $v_0 \leftarrow$ 0 
+		\State t $\leftarrow$ 0 
+		\While{$\theta_t$ not converged}
+		\State $t \leftarrow$ t+1
+		\State $g_t \leftarrow \nabla_{\theta}f_t(\theta_{t-1})$ 
+		\State $m_t \leftarrow \beta_1.m_{t-1}+(1-\beta_1)g_t$ 
+		\State $v_t \leftarrow \beta_2 v_{t-1}+ (1-\beta_2)g_t^2$ \
+		\State $\hat{m}_t \leftarrow \frac{m_t}{1-\beta_1^t}$ 
+		\State $\hat{v}_t \leftarrow \frac{v_t}{1-\beta_2^t}$ 
+		\State $\theta_t \leftarrow \theta_{t-1}-\alpha \frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon} $ 
+		\EndWhile
+		\State \Return $\theta_t$
+	\end{algorithmic}
+\end{algorithm}
+\cite{Kingma2014}  
+\newpage
+\cleardoublepage
+\subsubsection{Validation and testing phase}
+During each epoch after the model has processed all the training data and adjusted its weights a final evaluation step is introduced. This final evaluation is computation of the loss function for the validation data. This error generally serves as a monitor of the networks progress in learning the data.
+\\
+\\
+In general we train the network on data that is inherently noise. This means that in most cases the network will reach a limit where the training data gets over fitted and the validation data can not be predicted accurately anymore.(see figure \ref{fig:curve}) \cite{Bishop2013,Haykin2008,Budumu,P.Murphy1991,TrevorHastie2009}
+\\
+\\
+Using the validation loss as a monitor for generality we can choose the best model 
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.4\textwidth]{"standard_curve"}
+	\caption{General training loss vs. validation loss curve \cite{standardcurve}}
+	\label{fig:curve}
+\end{figure}
+\newpage
+\\
+\\
+\cleardoublepage
+\newpage
+\subsection{Overview of the hyper parameter space}
+In the table below we will give an overview off all the different hyper parameters that can be fine tuned when making and training neural networks (discussed in this research project)
+\\
+\\
+\begin{center}
+	\begin{tabular}{|l|p{4cm}|p{4cm}|}
+		\hline
+		\textbf{Hyper parameter} & \textbf{Function} & \textbf{Effect on network} \\
+		\hline
+		Layers & Amount of non linear transformations & Fitting ability \\
+		\hline
+		Nodes per layer & Amount of linear combinations from previous layer & Fitting ability \\
+		\hline
+		Activation function & Type of non linear mapping & Fitting ability \\
+		\hline
+		Optimizer & Method of finding a minimum & Speed of convergence \\
+		\hline
+		Learning rate & Magnitude of change in weights & Changes size of explored surface of error function \\
+		\hline
+		Initializer & Determines starting point & Speed of convergence, potentially end point \\
+		\hline
+		Batch size & Determines amount of data points in each weight update & Computation time, Generalization error \\
+		\hline
+		Validation size & Determines the validation loss & Validation loss \\
+		\hline
+	\end{tabular}
+\end{center}
+	
+\newpage
+\section{Neural networks applied to a two site Hubbard model}
+In this section we will use neural networks in conjunction with a two site Hubbard model to see if these networks are capable of modeling the ground state energy and what level of complexity will be required to achieve good performance. In general we can represent the two site Hubbard model by the following adjacency matrix 
+\begin{center}
+	\begin{bmatrix}
+		U_1 & t_{12} \\
+		t_{21} & U_2 \\
+	\end{bmatrix}
+\end{center}
+Due to the hermicity of this adjacency matrix we can characterize the system by its upper or lower triangle leading to a total of three parameters which will describe the energy of the ground state $\left[U_1 , t_{12} , U_2\right]$. For a system consisting of two sites and two electrons there is a total of three spin sectors $\left[-1, 0, 1\right]$. The electron configurations for these spin sectors are the following
+\begin{center}
+	$\lvert S_Z =1\rangle = \{\lvert\uparrow, \uparrow\rangle\}$ \\
+	$\lvert S_Z =-1\rangle = \{\lvert\downarrow, \downarrow\rangle\}$ \\
+	$\lvert S_Z = 0\rangle = \{\lvert\uparrow\downarrow,0\rangle, \lvert\uparrow, \downarrow\rangle, \lvert\downarrow, \uparrow\rangle, \lvert0, \uparrow\downarrow\rangle\}$ \\
+	\hfill
+\resizebox{\textwidth}{!}{
+	\begin{bmatrix}
+	\langle \uparrow\downarrow,0 \rvert \hat{H} \lvert \uparrow\downarrow,0 \rangle & \langle \uparrow\downarrow,0 \rvert \hat{H} \lvert \uparrow, \downarrow \rangle & \langle \uparrow\downarrow,0 \rvert \hat{H} \lvert \downarrow, \uparrow \rangle & \langle \uparrow\downarrow,0 \rvert \hat{H} \lvert 0, \uparrow\downarrow \rangle & \langle \uparrow\downarrow,0 \rvert \hat{H} \lvert \uparrow, \uparrow \rangle & \langle \uparrow\downarrow,0 \rvert \hat{H} \lvert \downarrow, \downarrow \rangle \\
+		
+	\langle \uparrow, \downarrow \rvert \hat{H} \lvert \uparrow\downarrow,0 \rangle & \langle \uparrow, \downarrow\rvert \hat{H} \lvert \uparrow, \downarrow \rangle & \langle \uparrow, \downarrow \rvert \hat{H} \lvert \downarrow, \uparrow \rangle & \langle \uparrow, \downarrow \rvert \hat{H} \lvert 0, \uparrow\downarrow \rangle & \langle \uparrow, \downarrow \rvert \hat{H} \lvert \uparrow, \uparrow \rangle & \langle \uparrow, \downarrow \rvert \hat{H} \lvert \downarrow, \downarrow \rangle \\
+		
+	\langle \downarrow, \uparrow \rvert \hat{H} \lvert \uparrow\downarrow,0 \rangle & \langle \downarrow, \uparrow \rvert \hat{H} \lvert \uparrow, \downarrow \rangle & \langle \downarrow, \uparrow \rvert \hat{H} \lvert \downarrow, \uparrow \rangle & \langle \downarrow, \uparrow \rvert \hat{H} \lvert 0, \uparrow\downarrow \rangle & \langle \downarrow, \uparrow \rvert \hat{H} \lvert \uparrow, \uparrow \rangle & \langle \downarrow, \uparrow \rvert \hat{H} \lvert \downarrow, \downarrow \rangle \\
+		
+	\langle 0, \uparrow\downarrow \rvert \hat{H} \lvert \uparrow\downarrow,0 \rangle & \langle 0, \uparrow\downarrow \rvert \hat{H} \lvert \uparrow, \downarrow \rangle & \langle 0, \uparrow\downarrow \rvert \hat{H} \lvert \downarrow, \uparrow \rangle & \langle 0, \uparrow\downarrow \rvert \hat{H} \lvert 0, \uparrow\downarrow \rangle & \langle 0, \uparrow\downarrow \rvert \hat{H} \lvert \uparrow, \uparrow \rangle & \langle 0, \uparrow\downarrow \rvert \hat{H} \lvert \downarrow, \downarrow \rangle \\
+		
+	\langle \uparrow, \uparrow \rvert \hat{H} \lvert \uparrow\downarrow,0 \rangle & \langle \uparrow, \uparrow \rvert \hat{H} \lvert \uparrow, \downarrow \rangle & \langle \uparrow, \uparrow \rvert \hat{H} \lvert \downarrow, \uparrow \rangle & \langle \uparrow, \uparrow \rvert \hat{H} \lvert 0, \uparrow\downarrow \rangle & \langle \uparrow, \uparrow \rvert \hat{H} \lvert \uparrow, \uparrow \rangle & \langle \uparrow, \uparrow \rvert \hat{H} \lvert \downarrow, \downarrow \rangle \\
+		
+	\langle \downarrow, \downarrow \rvert \hat{H} \lvert \uparrow\downarrow,0 \rangle & \langle \downarrow, \downarrow \rvert \hat{H} \lvert \uparrow, \downarrow \rangle & \langle \downarrow, \downarrow \rvert \hat{H} \lvert \downarrow, \uparrow \rangle & \langle \downarrow, \downarrow\rvert \hat{H} \lvert 0, \uparrow\downarrow \rangle & \langle \downarrow, \downarrow \rvert \hat{H} \lvert \uparrow, \uparrow \rangle & \langle \downarrow, \downarrow \rvert \hat{H} \lvert \downarrow, \downarrow \rangle \\
+\end{bmatrix}}
+\end{center}
+
+Which can be reduced to
+\begin{center}
+\begin{bmatrix}
+	U_1 & t_{12} & t_{12} & 0 & 0 & 0 \\
+	t_{12} & 0 & 0 & t_{12} & 0 & 0 \\
+	t_{12} & 0 & 0 & t_{12} & 0 & 0 \\
+	0 & t_{12} & t_{12} & U_2 & 0 & 0 \\
+	0 & 0 & 0 & 0 & 0 & 0 \\
+	0 & 0 & 0 & 0 & 0 & 0 \\
+\end{bmatrix}
+\end{center}
+When the two atoms are the same, the solution of the eigenvalue equation simplifies to the following eigenvalues
+\begin{center}
+$\lambda_1, \lambda_2, \lambda_3 = 0$ \\
+$\lambda_4 = U$ \\
+$\lambda_5 = \frac{1}{2}\left(U+\sqrt{U^2 + 16t^2}\right)$\\
+$\lambda_6 = \frac{1}{2}\left(U-\sqrt{U^2 + 16t^2}\right)$\\
+\end{center}
+Of these eigenvalues $\lambda_6$ represents the ground state energy of the two site Hubbard model and will be the focus in this section. Even though this equation of the ground state energy does not represent the PES of the whole parameter space we can already note some facts of importance.
+\begin{itemize}
+	\item The t parameter will be symmetric due to the quadratic term. We expect the t parameter to contribute to the stabilization of the system whether the value is positive or negative.
+	\item The U parameter is not symmetric due to the first order term and the second order term. Negative U values will stabilize the system and positive values will destabilize the system.
+	\item In the case of t=0 the PES surface of the homo nuclear system will be a discontinuous function of U. When $U<0$ the energy will decrease linearly  while the energy becomes zero for $U>0$.
+\end{itemize}
+
+\subsection{Training data}
+	
+For the analysis of the two site Hubbard model we will use the upper triangle of adjacency matrix as was defined in the previous section. The sampling will be done at random for all the parameters involved. For the two types of parameters we will both use a continuous uniform distribution albeit defined in a different sampling interval.
+\begin{center}
+	U: $\mathcal{U}$(-3,3) \\
+	t: $\mathcal{U}$(-10,10)\\
+\end{center}
+The uniform distribution is employed here to provide an unbiased and equal sampling of the complete parameter space of interest. In total we will include 500 000 data points where each one is defined by the aforementioned distributions. The sampling region for both t and U have been chosen in an asymmetric fashion based on the fact that for chemical systems we generally expect the U parameter to be lower than the t parameter. Both negative and positive t and U are included in the training data because we expect the t parameter to be symmetric (both positive and negative contribute to a decrease in energy) and the U parameter to be asymmetric. 
+
+\subsection{Test data}
+
+Since the parameter space of the two site Hubbard model is defined by three parameters we are able to visualize the exact PES energy surface of the two site Hubbard model and the predicted values of these test points by the neural networks. For this we construct a parameter grid that samples the parameter space in a constant fashion. Each parameter is partitioned into sections with step size 0.1 and thus consists of a grid with dimension $200\times60\times60$ for a total of 720000 points. 
+
+\subsection{Hyper parameter sweep}
+
+The first step in the analysis of the neural networks concerning the applicability to the Hubbard model will be to perform a hyper parameter sweep of different network parameters. The table belows contains a summary of the varied hyper parameters and the ones kept constant.
+\begin{center}
+	\begin{tabular}{|c|c|}
+		\hline
+		Hyper parameter & Variations \\
+		\hline
+		Layers & 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 \\
+		Nodes per layer & 3, 6, 9 \\
+		Activation function & ReLU, LReLU, PReLU \\
+		Initializer & random uniform \\
+		Optimization algorithm & ADAM \\
+		Batch size & 20 000 \\
+		Validation percentage & $10\%$ \\ 
+		\hline 
+	\end{tabular}
+\end{center}
+Computations have been performed on Google Colaboratory using GPU accelerated computation mode. Due to the nature of computations performed on a GPU we expect the results to be unreproducible but to be computed 5 to 50 times faster than training on CPUs \cite{Tsuchida, Vanhoucke2011}. As such we will perform the same hyper parameter sweep for two different seeds.
+
+\subsubsection{Comparison between the different seeds of the hyper parameter sweep}
+
+Figure \ref{fig:seed1} and \ref{fig:seed2} both contain the summary of the hyper parameter sweep performed at two different random seeds. In the graphs a distinction is made between the models based on the amount of nodes present in each layer with blue being the three nodes per layer models, orange the six nodes per layer models and green for the nine nodes per layer models. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{"HP_seed1"}
+	\caption{Summary of the hyper parameter sweep performed at random seed 1}
+	\label{fig:seed1}
+\end{figure}
+\paragraph{Discussion of the hyper parameter sweep performed at  random seed 1}
+Looking at figure \ref{fig:seed1} we take note that most of the models follow a similar progress when trained. The only models that seem to be deviating are the three nodes per layer models which appears to have either converged to a minimum that has a very large error compared to exact value  or to a saddle point. These deviating models tend to be more common with the ReLU models (the line at $\overline{\sigma^2}$=34 are the eight, nine and ten layer models). For the LReLU models this is only the case for the one layer model. One also takes note that there is a lack of uniformity in the validation loss evolution of the ReLU models in comparison to the LReLU and PReLU models.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{"HP_seed2 "}
+	\caption{Summary of the hyper parameter sweep performed at random seed 2}
+	\label{fig:seed2}
+\end{figure}
+
+\paragraph{Discussion of the hyper parameter sweep performed at random seed 2}
+A similar result is obtained when looking at the hyper parameter sweep performed at seed two. However in this case it is not the LReLU models that have converged to a suboptimal minimum or saddle point but the PReLU models. In this case it is the five, nine en ten layer models with the PReLU activation function that perform very bad. For the ReLU models it are the four, six, seven, eight en ten layer model that display this deviating performance.
+\\
+\\
+A note of interest is that these models that perform bad all share the same training and validation error of 34. The fact that they all share the same error and appear to evolve in a similar fashion to the same plateau might be indicative that the error surfaces of the different architectures have common aspects.
+
+\paragraph{Inspection of the LReLU hyper parameter sweep at seed 1}
+Figure \ref{fig:LReLU} displays a close up of the LReLU hyper parameter sweep and displays some interesting characteristics. Indeed when comparing the models based on their different amount of nodes per layer we see that in general the models with the same amount of nodes per layer tend to band together. It becomes quickly apparent that the largest variation is present in the three nodes per layer models. Their validation losses are all situated between $\left[0.01, 0.04\right]$ with a wide variation based on the amounts of layers (see middle figure in \ref{fig:LReLU}). The six nodes per layer models on the other hand are less spread out and lie relatively close to the nine nodes per layer models. On closer inspection of the loss curve in the final stages of training (right figure in figure \ref{fig:LReLU}) we see that they are separable from the nine nodes per layer models, albeit it with a small difference
+\begin{figure}[H]
+	\hspace*{-2cm}
+	\centering
+	\includegraphics[width=1.2\textwidth,\textheight]{"LReLU_seed1"}
+	\caption{Overview of the models trained with the LReLU activations function. Distinction between the models has been made based on the amount of nodes per layer. Blue lines indicate networks with three nodes per layer, orange six nodes per layer and green nine nodes per layer}
+	\label{fig:LReLU}
+\end{figure}
+Figure \ref{fig:comparison} makes a final comparison between the increase in network complexity and validation loss. We still see that the three nodes per layer models (blue) show a lot of irregularity and do not necessarily improve upon increasing the amount of layer in the model. The largest difference can be noticed when comparing the six nodes per layer models (orange). When increasing the amount of layers in the network the loss curve approaches that of the nine nodes per layer models. In this case we can perceive an improvement in validation error. 
+
+\begin{figure}[H]
+	\hspace*{-2cm}
+	\centering
+	\includegraphics[width=1.2\textwidth]{"comparison"}
+	\caption{Comparison between the three layers models, six layers and the nine layers models. The same distinction has been made as in the previous figure}
+	\label{fig:comparison}
+\end{figure}
+\\
+\subsubsection{Reliability and reproducability of the networks}
+
+In this section we will focus more on the reproducibility and reliability of these networks. As was mentioned in the begin of this section we can expect some variation across the different runs due to the nautre of GPU computations. Though the errors for the different networks with nine nodes per layer all lie within the same interval of $[0.001, 0.0001]$ it is desirable to achieve an error that is more or less the same across the different seeds. To this mean we shall aim our focus in this section more towards the variation of this error across different training session.
+\\
+\\
+As such we shall perform the following tests to provide a general assessment of the stability of the network.
+\begin{itemize}
+	\item Starting from the same seed we shall perform the network training multiple times using the same hyper parameters. The assessment of the stability of the network in question shall be done by comparing the mean squared error of the prediction of these networks on the test data. This provides a reference to what degree we can expect the network to be stable when starting from the same point.
+	\item Starting from a number of different seeds we shall perform the network training using the same hyper parameters. As in the previous suggested test, comparison of the mean squared error shall be done between the predictions on the testing data. This provides a reference to the degree of stability between different seeds 
+\end{itemize}
+\\
+\\
+As a reference we shall also perform the same inter and intra seed comparison for a model with less complexity. For this purpose we shall use a neural network with nine layers and three nodes per layer.
+\\
+\\
+We shall define a network that is stable as one that converges to a same solution when training is repeated different times or using a different seed. Too asses whether a network has converged to the same solution we propose the following criteria
+\begin{enumerate}
+	\item If the networks converge to the same minimum across different training cycles than the training loss and the validation loss should converge to the same minimum.
+	\item If the networks converge to the same minimum then the difference between the prediction surfaces should be relatively the same. To asses this we shall use an error matrix $\Delta$ in which the elements are calculated as follows for 
+	\\
+	\begin{equation*}
+	\Delta_{ij} =
+	\begin{cases}
+	\frac{1}{N} \sum_{n=1}^{N} \left(y_{i}(\textbf{x}_n)-t_n\right)^2 \quad \text{if } i=j \\
+	\frac{1}{N} \sum_{n=1}^{N} \left(y_{i}(x_n)-y_{j}(x_n)\right)^2 \quad \text{if } i \neq j \\
+	\end{cases}
+	\end{equation*}
+	\\
+	where $t_n$ is the target vector of input vector $x_n$ and $y_i$ is the network function of network i. The diagonal will contain the mean square error of the network compared to the exact solution and will provide a reference to compare the differences between the networks.
+\end{enumerate}
+
+\paragraph{Discussion of the nine layer and three nodes per layer network}
+
+When looking at the loss evolution of the nine layer and three nodes per layer network we already notice that this graph consists of very irregularly shaped curves. In both cases, i.e. training performed on the same seed multiple times and training on different seeds, we see that none of the curves evolve to a common minimal loss after extensive training. This is already indicative that these networks, though they share a similar architecture, converge to different minima on the error surface.
+\\
+\\
+Our suspicion that they do not describe the same minimum or are trapped on a saddle point is also confirmed when looking at the error matrices of both the inter seed and intra seed comparison. The diagonal of both cases display a relative large variability when it comes to the mean squared error compared to the exact PES surface. Though we do expect some variability in this error as even in the best case scenario we expect that the networks will not land at exactly at the same location on the error surface should they converge to the same minimum, the fact that some errors differ by the a factor ten is troubling to say the least.
+\\
+\\
+When looking at the off diagonal elements we see that this error between the different surfaces also shows inconsistencies in comparison to each other. This error between the prediction surfaces of networks trained on different seeds shows some form of consistency as they are all centered around a similar value. However when looking at the error of networks trained on the same seed this consistencies is no longer present. Indeed, looking at the different network comparisons we see that some tend to be very similar to each other there is one (run 3) that appears to be very different compared to the other networks.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{"3nodes"}
+	\caption{Stability overview for the nine layers and three nodes per layer network. The colormap of the matrix has been set between the range of $\left[0,0.01\right])$. Any value above this shall be displayed as dark red}
+\end{figure}
+
+\paragraph{Discussion of the nine layer and nine nodes per layer network}
+
+The difference between the stability analysis of the three nodes per layers network and the nine nodes per layer network is quiet significant. Indeed when looking at both the training loss evolution and validation loss evolution of the different training cycles we already notice that independent of the seed or the run of the same seed that the models appear to be converging to the similar minimum in loss. This is already a positive indicator as this increases the chance that the networks all converged to the similar minimum on the error surface. We do take note that at the lowest value of the loss function there also appears to be some oscillatory behavior which is probably indicative that the network has converged to a minimum but has trouble reaching the actual exact minimum. From this observation we can expect that the networks will not be exactly the same but will display minor differences when comparing their prediction surfaces.
+\\
+\\
+Looking at the diagonal of the error matrix we note that all the mean squared errors with respect to the exact PES lie in the same magnitude of error, i.e. $10^{-4}$, and appear to be centered in the interval of $\left[0.0002, 0.0005\right]$. The off diagonal elements also lie within this magnitude of $10^{-4}$ but tend to be larger than the diagonal elements (roughly 2 times in many cases). 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{"9nodes"}
+	\caption{Stability analysis for the nine nodes per layer models}
+\end{figure}
+
+\subsubsection{Conclusion}
+
+\paragraph{Hyper parameter sweep}
+From the hyper parameter sweep we have learned that changing the activation function has a small effect on the overall validation loss of the network. The LReLU and PReLU activation functions appear to have a more uniform way of converging to the minimum. Varying the amount of layers and nodes per layer however has a more dramatic effect on the overall performance of the network. Increasing the amount of nodes from three to six causes the greatest improvement. The transition from six nodes per layer to nine nodes per layer also offers a increase in performance but this one is not as big. This might be indicative that there exists a upper bound for each system up to which the network   
+\paragraph{Stability analysis}
+As is visible in the comparison between the two networks we take note that the networks that are less complex tend to have a more volatile error surface. The difference between seeds and within the same seed are not insignificant and thus give rise to the idea that either these networks converge to a different minimum on the error surface or they are in the same region of the error surface but this error surface has "superficial" minima and causes the algorithm to not converge to a specific minimum. The other option is that they are stuck on saddle points.
+\\
+\\
+Starting from a certain level of network complexity we see that these networks converge to a stable solution. Though we cannot asses directly if the minima they converge to are the same, we do note that the minima they converge to are relatively similar to each other. Thus based on these criteria we can conclude that a certain level of reliability and reproducibility can be obtained from these networks but only on the condition that they have a certain level of network complexity 
+
+\subsection{Visualization of the PES surface of the groundstate}
+
+The final stap in the analysis of the two site Hubbard model is the visualization of the predicted potential energy surface. For this we will visualize the nine layer models. Figure \ref{fig:PES} compares the exact PES to the different network function predictions 
+\\
+\\
+We see that the PES of the network functions tend to become better as the network complexity increases. Indeed looking at the three nodes per layer model we see that it tends to perform well at the $t\gg0$ or $t\ll0$ region of the PES. this corresponds to the highly conjugated or delocalized region of the PES. Th region that does not perform well is the envelop like iso surface in the limit of $t\rightarrow0$ which corresponds to the dissociated or insulating region of the PES. Due to the complexity of the shape the model seems to be unable to create a smooth iso surface. It is probably safe to assume that the majority of the error is gathered in this region.
+\\
+\\
+Looking at the other two models we see that the fit to this dissociative regime tends to improve upon increasing the network complexity. Again we see that the transition form three nodes per layer to six nodes per layer offers a huge improvement in performance. There does however appear to be region where the energy takes a positive value which is indicative that the network is not complex enough to capture the complete PES.Upon further increase of the complexity when transitioning from six nodes per layer to nine nodes per layer the improvement continues. The surfaces near the envelope like structure start to smoothen out and appears to be nearly identical to the exact PES
+\begin{figure}[H]
+	\includegraphics[width=\textwidth]{"hubbard_visualization"}
+	\caption{ 3D Visualization (through iso surfaces) of the PES surface of the ground state of the two site Hubbard model. The left plot represents the exact PES. Following this is from left to right the nine layer models with three, six and nine nodes per layer. The y axis is oriented vertically and represents the t parameter. The x-axis is pointing in the direction of the paper and represents the $U_1$ parameter. The z-axis is oriented to the reader and represents the $U_2$ parameter}
+	\label{fig:PES}
+\end{figure}
+
+\newpage
+\section{Neural networks applied to a four site Hubbard model}
+
+In this section we will be focusing on the analysis of the ground state energy of the four site Hubbard model. The main difference between a two site sytem and a four site system will be the large increase in the dimensionality of the parameter space. Indeed when comparing the upper triangle of the two site which consisted of three parameters with that of the four site Hubbard system we see that the parameter has increased roughly three fold
+\begin{center}
+	$\left[ U_1 , t_{12}, t_{13}, t_{14}, U_2, t_{23}, t_{24}, U_3, t_{34},U_4 \right]$
+\end{center}
+\\
+\\
+This increase of the parameter space is accompanied by the problem that the PES of the ground state cannot be visualized like that of the two site model. We can however utilize other properties that are linked with the increase of the parameter space. As such we will use properties linked to this ground state not only to asses the fit to the exact energy surface but also to asses learned features
+\begin{enumerate}
+	\item \textbf{Structural diversity}, the four site Hubbard model has a minimum of three bonds connecting al four sites and up to a maximum of six bonds between all the sites
+	\item \textbf{Symmetry}, the energy of the system must be invariant under the permutation of the site indices. The four site system is defined by a $\left(4\times4\right)$ adjacency matrix and any system has a equivalent $4!$ symmetry equivalent structures by permutating the rows and columns in a equal way \cite{Essler2005}
+\end{enumerate}
+Besides testing for these properties we will also assess to generality of these networks by evaluating its applicability for the analysis of two site and three site systems   
+
+\subsection{Training data}
+
+\subsubsection{Randomized dataset}
+Data will be generated in a similar fashion as was done in the section concerning the analysis of the two site systems. Both the t and U parameter are drawn at random from a continuous uniform distribution
+\begin{equation*}
+t : \mathcal{U}(-10,10)
+\end{equation*}
+\begin{equation*}
+U: \mathcal{U}(-3, 3)
+\end{equation*}
+Utilizing the uniform random sampling provides training data that does not specifically contain any systems of chemical or physical significance. The chance of drawing (semi-)uniform combination of parameters is possible but is unlikely to happen. In total we will generate a million data points using this method  
+
+\subsubsection{Data augmentation}
+As was stated in the introduction of this section we stated that the Hubbard system has inherent symmetry under the form of permutation of the site indices. Specifically, any input structure is characterized by having 4! equivalent structures
+\\
+\\
+Starting from the unaugmented random dataset we will construct two additional datasets each augmented with a specific amount of symmetry operations. We will however keep the number of data points in these datasets constant relative to the original dataset. With this in mind we define the following datasets
+\begin{enumerate}
+	\item \textbf{N symmetry augmented dataset}, starting from the randomized dataset we choose a one fourth of the original points and perform four permutation operations upon each of these points. The dataset thus consists of 250 000 unique data points and 750 000 symmetry equivalent data points
+	\item \textbf{N! symmetry augmented dataset}, starting from the randomized dataset we choose a one twenty-fourth of the original points and perform twenty-four permutation operations upon each of these points. The dataset thus consists of 42 000 unique data points and 958 000 symmetry equivalent data points
+\end{enumerate}
+Each of these datasets will be trained in the same fashion and will be evaluated according to the same test sets, this will hopefully give a idea on two different factors
+\begin{itemize}
+	\item What is the effect of data augmentation upon the model performance? Is the introduction of this physical knowledge necessary to obtain a robust model?
+	\item Can the property of inherent symmetry of the Hamiltonian emerge through the analysis of completely random and asymmetric data or does it need to be present in the training data it self? 
+\end{itemize}
+
+\subsection{Testing data}
+
+\subsubsection{Four site system testing data}
+
+In order to asses the neural networks when it comes to their applicability to four site systems we propose the following testing systems.
+\begin{itemize}
+	\item \textbf{Butadiene like system}, a four site system in which the minimal amount of bonds between the sites exist. In comparison to the training data this is the structure that could be considered to be not only structurally most different but also chemically speaking the most deviating
+	\begin{equation*}
+	\begin{bmatrix}
+	U_1 & t_{12} & 0 & 0 & U_2 & t_{23} & 0 & U_3 & t_{34} & U_4 
+	\end{bmatrix}
+	\end{equation*}
+	\item \textbf{Cyclobutadiene like system}, a four site system with four connections between the different site. Structurally and chemically this is still deviating from the training input but is closer related to it than the linear system
+	\begin{equation*}
+	\begin{bmatrix}
+	U_1 & t_{12} & 0 & t_{14} & U_2 & t_{23} & 0 & U_3 & t_{34} & U_4
+	\end{bmatrix}
+	\end{equation*}	
+	\item \textbf{Fully connected four site system}, testing data that resembles the training input the most. 
+\end{itemize}
+For each of the Hubbard systems we will construct two datasets that will test the symmetry properties of the Hubbard system. One of these represents the case where the system is homo nuclear and can be represented by one U and t parameter
+\begin{center}
+	\begin{bmatrix}
+		U & t & 0 & 0 & U & t & 0 & U & t & U
+	\end{bmatrix}
+\end{center}
+\begin{center}
+	\begin{bmatrix}
+		U & t & 0 & t & U & t & 0 & U & t & U
+	\end{bmatrix}
+\end{center}
+\begin{center}
+	\begin{bmatrix}
+		U & t & \frac{1}{\sqrt{2}}t & t & U & t & \frac{1}{\sqrt{2}}t & U & t & U
+	\end{bmatrix}
+\end{center}
+Where we have deduced the t value in the fully connected system by means of geometric arguments. The fully connected system can be represented as
+\begin{center}
+	\begin{tikzpicture}
+	\tikzstyle{every node} = [draw, shape=circle, scale=1pt];
+	\node (1) at (0,0) {$3$};
+	\node (2) at (0,2) {$2$};
+	\node (3) at (-2,2) {$1$};
+	\node (4) at (-2,0) {$4$};
+	\draw (1) -- (2)
+	(1) -- (3)
+	(1) -- (4)
+	(2) -- (4)
+	(2) -- (3)
+	(3) -- (4)	
+	\end{tikzpicture}
+\end{center}
+As such we can derive a value for the diagonal using the Pythagorean theorem
+\begin{equation*}
+t_{13} = t_{24} = \frac{1}{\sqrt{\frac{1}{t_{12}^2} + \frac{1}{t_{14}^2}}}
+\end{equation*}
+The other dataset that was constructed will be to test the Jahn-Teller effect in the PES of the ground state. The effect states that if the electronic state of the molecular system is degenerate it will undergo a geometric distortion which will lift this degeneracy. In terms of the adjacency matrix this corresponds to a pairing of bonds which will be varied independently from each other and with U=1
+\begin{center}
+	\begin{bmatrix}
+		U & t_1 & 0 & 0 & U & t_2 & 0 & U & t_3 & U
+	\end{bmatrix}
+\end{center}
+\begin{center}
+	\begin{bmatrix}
+		U & t_1 & 0 & t_2 & U & t_2 & 0 & U & t_1 & U
+	\end{bmatrix}
+\end{center}
+\begin{center}
+	\begin{bmatrix}
+		U & t_1 & t_3 & t_2 & U & t_2 & t_3 & U & t_1 & U
+	\end{bmatrix}
+\end{center}
+\begin{equation*}
+t_3  = \frac{1}{\sqrt{\frac{1}{t_{1}^2} + \frac{1}{t_{2}^2}}}
+\end{equation*}  
+Each of these datasets will be constructed by taking a uniform sample by partitioning each parameter in an equal fashion with step size of 0.1 within the training range. As such the homo nuclear dataset will consist of 12 000 data points and the Jahn-Teller dataset of 40 000 data points.
+\\
+\\
+The visualization of the exact PES of these individual test sets is given in figure \ref{fig:PESoverview}. Some interesting features are already noticeable in the different graphs. When looking at the homo nuclear PES we take note that they all display a similar shape that is centered with the maximum around the t=0 area of the graph. From then the energy goes down with the increasing value of $\lvert t \rvert$ and negative U.
+\\
+\\
+The Jahn-Teller effect however display different behavior based on the structure in question, which is to be expected as the linear structure and the cyclic structures belong to different symmetry point groups. The linear Hubbard structure displays a elliptical contour plot that is centered around the the origin $\left(t_1, t_2\right)=\left(0,0\right)$ which represents the maximum. The cyclic structures on the other hand have their maxima on the diagonals of the contour plots where $\lvert t_1 \rvert = \lvert t_2 \rvert$
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{"PES overview"}
+	\caption{Overview of the PES of the different test sets. The left column represents the PES of the different homo nuclear PES and the right column the PES of the Jahn-Teller effect}
+	\label{fig:PESoverview}
+\end{figure}
+\subsubsection{Test systems with less than four sites}
+
+In order to assess the generality of the neural network we will also construct datasets that represent molecular systems that are less complex than the original four site model. One could write any molecular system that has less sites than the original training data structure in the adjacency matrix of the training system. For the four site system we can formulate two additional datasets that represent a test set for the two site Hubbard model, the linear three site Hubbard model and the cyclic three site Hubbard model
+\begin{center}
+	Two site Hubbard model in the four site basis
+\end{center}
+\begin{center}
+	\begin{bmatrix}
+		U_1 & t_{12} & 0 & 0 & U_2 & 0 & 0 & 0 & 0 & 0
+	\end{bmatrix}
+\end{center} 
+\\
+\begin{center}
+	Linear three site Hubbard model in the four site basis
+\end{center}
+\begin{center}
+	\begin{bmatrix}
+		U_1 & t_{12} & 0 & 0 & U_2 & t_{23} & 0 & U_3 & 0 & 0
+	\end{bmatrix}
+\end{center} 
+For each of these adjcency matrix upper triangles we perform a random uniform sampling	
+
+\subsection{Analysis of the predicted PES of the test data}
+Due to the large amount of data of the PES evolution in terms of network complexity we will restrict ourselves to the discussion of the linear Hubbard system for the following reasons
+\begin{enumerate}
+	\item Compared to the original training input this testing system differs the most on a structural level. The training data is the four site Hubbard model in which the maximum amount of bonds is present in the system, compared to the linear Hubbard model which has the minimal amount of bonds.
+	\item The sampling was done according to a continuous uniform distribution for both the t parameter and the U parameter of the Hubbard system. From statistics we know that the probability density function of a uniform distribution is given by
+	\begin{equation*}
+	f(x) = \frac{1}{b-a} \text{ for the uniform distribution } \mathcal{U}(a,b) \text{ with } x \in \left[ a, b \right]
+	\end{equation*}
+	The case where a bond does not exist between two atoms would correspond to a value of t=0. Statistically speaking we have a chance of this occuring with 5 $\%$ chance. And so the estimated chance of the inclusion of a system which has 3 bonds would correspond to $0,05^3$ as there are 3 bonds that each have to be zero. On top of that there is a total of sixteen structures that have three bonds of which twelve corresponds to the linear Hubbard model. This bring us to a total estimated chance of 0,009375$\%$ to include a linear structure in the training data. Taking the size of the dataset into account this would (at best) roughly come down to 9375 linear structures
+\end{enumerate}
+The study of the PES will be done for the models trained on the completely randomized dataset and the N! symmetry augmented dataset.
+
+\subsubsection{Analysis of the PES of the networks trained on randomized data}
+\paragraph{Discussion of the homo nuclear PES}
+Figure \ref{fig:PES_random} displays the evolution of the PES in terms of increasing network complexity. Looking at the shape of the PES for the network of the simplest architecture, i.e. one layer with ten nodes per layer, we see that the shape of the PES already closely resembles that of the desired PES. However when looking at the squared error of the network PES compared to the exact PES we note that the main area of misfit appears to be centered around the t=0 section of the PES. The high t section however appears to be performing good which is in agreement with the conclusions from the previous chapter where we saw that the models of with the least complex showed good performance in the strongly conjugated area of the PES (high t limit).
+\\
+\\
+Upon further increasing the network complexity the fit of the network function becomes better. We do take note however that the error remains concentrated in the t=0 area of the PES. This is especially the case for the combination t=0 and $U>0$ for the most complex model.
+\\
+\\
+As was mentioned in the introduction of chapter 2 we already took note that this area displays a characteristic behavior for the two site model. There we noted that the function will display a discontinuous behavior when t=0 and U is varied. Which is what appears to cause a problem in the PES of the linear Hubbard system.
+\\
+\\
+Taking this fact into account we propose two possible solutions that could provide a improvement on the performance in this section of the PES
+\begin{enumerate}
+	\item As was mentioned in the introduction of chapter 2 we know that the energy has symmetry in the t parameter and asymmetry in the U parameter when it comes to the value of the energy of the ground state. By using a uniform distribution we might have implicitly oversampled the high t area due to the fact that both the negative and positive t contribute in a equal fashion to the overall energy of the system, which resulted in a under sampling of the low t area. A possible remedy could then be to employ a different sampling strategy such as a Gaussian distribution centered around the t=0 area
+	\item Another possibility is that the network has not reached a level of complexity that is sufficient in order to provide a complete description of the PES. 
+\end{enumerate}
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}
+		\includegraphics[height=0.4\textheight]{"Linear_PES_random"}
+	\end{subfigure}
+	\begin{subfigure}
+		\includegraphics[height=0.4\textheight]{"Linear_PES_MSE_random"}
+	\end{subfigure}
+	\caption{Overview of the evolution of the homo nuclear PES of the networks trained on random data in function of the network complexity (top) and their corresponding squared error with respect to the exact PES (bottom)}
+	\label{fig:PES_random}
+\end{figure}
+\newpage
+\paragraph{Discussion of the Jahn-Teller PES}
+
+Figure \ref{fig:JT_random} displays the evolution of the Jahn-Teller PES for the linear Hubbard model in function of the network complexity. If we compare the shape of the PES of the simplest network to that of the exact solution (figure \ref{fig:PESoverview}, upper right) we already see a significant difference between the two contour plots. The network produces a diamond shaped contour instead of the desired elliptical shape. Although the prediction of the network is not the same as the exact we do see that some interesting properties are already emerging from this simple network prediction. The energy is centered around the origin and is distributed in a symmetric fashion around it. Looking at the error surface of the predicted PES we see that the error is very symmetric and appears to be centered around the region of the diagonal. 
+\\
+\\
+When increasing the network complexity we notice that the shape of the models with intermediary complexity area already improved significantly in comparison to the simplest model. The desired elliptical shape starts to emerge though still with rough contour boundaries. Upon inspection of the error surface we take note that error has been reduced in comparison to the simplest network albeit it in a different way. This highlights the different effect that increasing the complexity through the introduction of more layers or more nodes per layer have with respect to the network performance.
+\\
+\\
+Finally the most complex network appears to have fitted the shape of the exact PES nearly perfect. The error surface however does highlight that the region with t=0 still offers some problems as the error is relatively high in comparison to the rest of the PES  
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}
+		\includegraphics[height=0.4\textheight]{"Linear_JT_random"}
+	\end{subfigure}
+	\begin{subfigure}
+		\includegraphics[height=0.4\textheight]{"Linear_JT_MSE_random"}
+	\end{subfigure}
+	\caption{Overview of the evolution of the JT PES of the networks trained on random data in function of the network complexity (top) and their corresponding squared error with respect to the exact PES}
+	\label{fig:JT_random}	
+\end{figure}
+
+\newpage
+\subsubsection{Analysis of the PES of the networks trained on augmented data}
+
+\paragraph{Analysis of the homo nuclear PES of networks trained on augmented data}
+
+Comparing the results from figure \ref{fig:PESaug} to that of figure \ref{fig:PES_random} we can note some differences between them. The networks trained on augmented data display a significant improvement when the predictions of the network with the least complex architecture are compared. The error in the t=0 area is significantly lower than that of the networks trained on randomized data.
+\\
+\\
+However when looking at the networks of intermediary complexity and highest complexity we also see that the improvement is not that large or even there. The situation of the error is nearly identical and only shows a real difference when looking at the network containing eight layers and ten nodes per layer
+\paragraph{Analysis of the Jahn-Teller PES of the networks trained on augmented data}
+
+As was the case with the homo nuclear PES we see that the largest difference is present in the network that is the least complex. Comparing figure \ref{fig:JT_random} to figure \ref{fig:JTaug} we see that the contour plot of the network trained on augmented data is shaped like a hexagon instead of a diamond like structure. The difference with the error surface is also different but structured in a similar way. Both these models show the least error in the region where $\lvert t_1 \rvert = \lvert t_2 \rvert$. The network trained on symmetry augmented data however has a more defined low error region but has errors of greater magnitude in other regions in comparison to the networks trained on random data
+\\
+\\
+An other model that displays different behavior is the model with one layer and eighty nodes. The error surface of this model has a similar error surface to that of the model with one layer and ten nodes per layer but with a extra region of low error on the $t_1$=0 line. The error of the model trained on random data however displays the opposite of this error surface where the $t_1$=0 line is the main area of error and the rest of the PES has improved 
+\\
+\\
+As a final note we see that the contour plot of the PES and the error surface for the eight layer model with eighty nodes per layer is practically the same
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}
+		\includegraphics[height=0.4\textheight]{"Linear_PES_nfac"}
+	\end{subfigure}
+	\begin{subfigure}
+		\includegraphics[height=0.4\textheight]{"Linear_PES_MSE_nfac"}
+	\end{subfigure}
+	\caption{Overview of the evolution of the homo nuclear PES of the networks trained on random data in function of the network complexity (top) and their corresponding squared error with respect to the exact PES}
+	\label{fig:PESaug}
+\end{figure}
+\begin{figure}
+	\centering
+	\begin{subfigure}
+		\includegraphics[height=0.4\textheight]{"Linear_JT_nfac"}
+	\end{subfigure}
+	\begin{subfigure}
+		\includegraphics[height=0.4\textheight]{"Linear_JT_MSE_nfac"}
+	\end{subfigure}
+	\caption{Overview of the evolution of the JT PES of the networks trained on random data in function of the network complexity (top) and their corresponding squared error with respect to the exact PES}
+	\label{fig:JTaug}	
+\end{figure}
+\newpage
+\subsection{Performance on the two site and three site test sets}
+In figure \ref{fig:OStwo} and figure \ref{fig:OSthree} we plotted the predictions on two site and linear three site Hubbard models using the four site trained models that were discussed in the previous sections. Looking at the different plots we see that there is a big difference between the predictions of the two site systems and that of the linear three site systems.
+\\
+\\
+Starting from the least complex network we note that the models fail to predict the energy of the two site systems accurately. This goes as far that the different permutations of these two site models across the adjacency matrix are not banded together as one would expect. Upon increasing the amount of nodes per layer and the amount of layers we see that this lack of equality between the different equivalent structures is being remedied. In the eight layers model with eighty nodes per layer we see that all the predictions of the two site system are gathered together along the diagonal of the plot
+\\
+\\
+The opposite can be observed for the linear three site system however. For all the different network complexities we see that the predictions are scattered in a random way throughout the whole plot. We do note however that though they are scattered across the whole graph we do see that many equivalent structures seem to be grouped together. 
+\\
+\\
+We hypothesize that the two site systems can be processed by the four site trained networks due to being implicitly included due to the Jahn-Teller effect for the four site system. Indeed if we stretch the middle bond in a linear four site model or one of the pairs of the cyclic four site model to an "infinite" distance the t value should go to zero in this case, when this occurs we technically have two two site systems. Due to the fact that the Hubbard model is a full CI method we expect that it includes size consistency meaning that for two molecules A and B that are not connected
+\begin{equation*}
+E\left(A+B\right)=E\left(A\right)+E\left(B\right)
+\end{equation*} 
+For two molecular fragments that are the same this would imply double the energy of the molecular fragment. The occurrence of this phenomenon implies that though examples of dissociation in molecular fragments were not included in the original training data, the network was able to learn this characteristic through the analysis of unrelated data.
+\\
+\\
+The anomalous behavior of the eight layer model in the low energy limit could also be explained through the following reasoning. If we look back at the error graph \ref{fig:JT_random} that displays the error surface of the eight layer network with eighty nodes we see that the area of minimal performance is the section where t approaches zero. In the low energy limit of the two site Hubbard model we know that the t parameter approaches zero. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{"Two site evaluation"}
+	\caption{Overview of the predicted value versus the exact value of the randomized  two site data. The axis have both been chosen to correspond to the minimal and maximal energy meaning a perfect prediction will be situated along the diagonal. The first thousand structures and their permutations across the adjacency matrix have been visualized (with each color corresponding to a different permutation)}
+	\label{fig:OStwo}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{"Three lin site evaluation"}
+	\caption{Overview of the predicted value versus the exact value of the randomized  linear three site data. The axis have both been chosen to correspond to the minimal and maximal energy meaning a perfect prediction will be situated along the diagonal. The first thousand structures and their permutations across the adjacency matrix have been visualized (with each color corresponding to a different permutation)}
+	\label{fig:OSthree}
+\end{figure}
+\newpage
+\subsection{Conclusion}
+\paragraph{Four site testing systems}
+Concerning the analysis of the four site systems we have seen that although the netword has been trained on a fully connected four site system it is capable of predicting systems that differ from it. When applied to the linear four site system we noticed that increasing the network complexity was a necessity if the PES is to be reproduced from completely random data. Although the networks of lesser complexity were not able to reproduce the PES, we did note that they do appear to capture parts of the PES and some aspects of the inherent symmetry of the parameter space.
+\\
+\\
+The effect of data augmentation of the training data was mainly visible in the networks that had relatively simple architectures but is not providing much improvement when comparing the results for networks of higher complexity. The same conclusions can be made for the other test sets containing the cyclic structures and the same effects are visible when using intermediary data augmentation. Should the reader be interested in inspected these PES and their evolution across different levels of network complexity we refer to the addendum where the different overviews are gathered together.
+\\
+\\
+As a final note one could argue that the network was able to learn general concepts through the use of randomized data. The network learned features providing it the tools to assess four site Hubbard systems that are structurally different from the original training structure. Besides this the networks also appear to have learned the symmetry properties of the PES and was able to asses the Jahn-Teller effect
+
+\paragraph{Two site and three site Hubbard testing systems}
+A significant different was also visible when the testing data where Hubbard systems with less sites than the original training data. Upon increasing the complexity of the networks their capacity to evaluate the two site Hubbard systems increased up to the point where the prediction was sufficiently accurate. Besides this the most complex network evaluated all the two site systems that were permutated across the adjacency matrix in an equal fashion providing an additional indication that the symmetry of the Hubbard model was included in the network.   
+
+\newpage
+\section{Research conclusion}
+
+\paragraph{Neural networks applied to two site Hubbard systems}
+In the first section of the research we evaluated whether the neural networks were capable of modeling the ground state of the two site Hubbard system. Upon comparing networks of different complexities we noticed that even the simplest network was able to roughly fit the PES. Upon further increasing the complexity of the network this fit improved. The largest transition occurred in the doubling of the amount of nodes followed by a less drastic improvement upon tripling the amount of nodes. We also verified that training the networks on GPU causes irreproducibility of the exact same network. However upon reaching a certain level of complexity this irreproducibility appears to be relatively constant and is characterized by a consistent error between the networks 
+\begin{itemize}
+	\item In order to achieve good performance we need to create a network of a certain level of complexity
+	\item The required complexity in order to obtain a good fit appears to be limited. There might be a point where further increase of the complexity offers smaller benefits
+	\item Training on GPU causes irreproducibility, however this can be mitigated to some extent by using networks of sufficiently high complexity which causes a quasi constant error
+\end{itemize}
+
+\paragraph{Neural networks applied to four site Hubbard systems}
+In the second section of the research we evaluated if this applicability was also possible for more complex Hubbard systems and the effects of data augmentation through the introduction of symmetry in the data. In addition to this we evaluated whether these networks were applicable to four site Hubbard models in general or if they were only applicable to input data that is structured similarly to the training data. The symmetry properties of the Hubbard model were also evaluated by studying the Jahn-Teller effect applied to these four site systems. Finally the applicability of these networks to systems containing less than four site were also evaluated
+\begin{itemize}
+	\item The neural networks were able to deal with structurally different four site systems. Upon reaching a certain level of complexity these networks were able to deal with Hubbard systems which were structurally very different from the original input data
+	\item The Jahn-Teller effect was properly predicted by the neural networks without the required of training data that demonstrates this effect. This might be indicative that the symmetry of the Hubbard model is included in the network as a learned feature
+	\item The effect of symmetry augmented data data was mainly visible in the networks of lower complexity. In networks of higher complexity the effect of this augmentation was less apparent which might be indicative that symmetry is learned automatically when the network reaches a certain level of complexity
+	\item Two site systems were predictable using the neural networks, three site systems were not which is a possible indication that size consistency is a learned feature of these networks  
+\end{itemize} 
+
+\newpage
+\bibliography{library}
+\bibliographystyle{plain}
+
+\end{document}
